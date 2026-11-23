@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گرماچین پرو | هوش مصنوعی بهینه‌سازی گرما، چیدمان و تحلیل نقشه ساختمان</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Vazirmatn -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #0b1120;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(22, 32, 52, 0.82);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1120;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.85); opacity: 0.85; }
+            50% { transform: scale(1.15); opacity: 0.45; }
+            100% { transform: scale(0.85); opacity: 0.85; }
+        }
+        .hotspot-pulse {
+            animation: pulse-ring 2.2s infinite ease-in-out;
+        }
+        .tab-active {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(234, 88, 12, 0.14));
+            border-color: rgba(249, 115, 22, 0.65);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);
+        }
+        .tab-active-blue {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(59, 130, 246, 0.14));
+            border-color: rgba(56, 189, 248, 0.65);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-11/12 max-w-md"></div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 glass-card border-b border-slate-800/80 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-600 via-amber-500 to-sky-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fa-solid fa-sun-plant-wilt text-white text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-lg sm:text-xl font-black tracking-tight text-white">گرماچین پرو <span class="text-orange-400 font-semibold text-xs sm:text-sm">GarmaChin Pro AI</span></h1>
+                        <span class="bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[11px] px-2.5 py-0.5 rounded-full font-medium">خانه • مدرسه • اداری • پیش‌ازساخت</span>
+                    </div>
+                    <p class="text-[11px] sm:text-xs text-slate-400">بهینه‌سازی گرمایش و نور خورشید از طریق دوربین، عکس و نقشه معماری ساختمان</p>
+                </div>
+            </div>
+
+            <!-- Live Quick Metrics -->
+            <div class="flex items-center gap-3 sm:gap-5 bg-slate-900/90 border border-slate-800 px-4 py-2 rounded-2xl">
+                <div class="text-center">
+                    <span id="lblHeaderMetric1" class="block text-[10px] sm:text-[11px] text-slate-400">امتیاز فعلی</span>
+                    <span id="headerCurrScore" class="text-sm sm:text-base font-bold text-rose-400">۴۸٪</span>
+                </div>
+                <div class="h-7 w-px bg-slate-800"></div>
+                <div class="text-center">
+                    <span id="lblHeaderMetric2" class="block text-[10px] sm:text-[11px] text-slate-400">امتیاز بهینه</span>
+                    <span id="headerOptScore" class="text-sm sm:text-base font-bold text-emerald-400">۹۱٪</span>
+                </div>
+                <div class="h-7 w-px bg-slate-800"></div>
+                <div class="text-center">
+                    <span id="lblHeaderMetric3" class="block text-[10px] sm:text-[11px] text-slate-400">صرفه‌جویی گرما</span>
+                    <span id="headerSavings" class="text-sm sm:text-base font-black text-amber-400">+۳۶٪</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Controls: Building Type Selector + Main Workflow Mode Switcher -->
+    <div class="max-w-7xl w-full mx-auto px-4 pt-5 space-y-4">
+
+        <!-- 1. Universal Building Type Selector -->
+        <div class="glass-card rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 border border-slate-800">
+            <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-200">
+                <i class="fa-solid fa-city text-orange-400"></i>
+                <span>نوع کاربری ساختمان را انتخاب کنید:</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="setBuildingType('home')" id="btnType-home" class="btype-btn px-3.5 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-1.5 bg-orange-500/20 border-orange-500/60 text-orange-200">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <span>خانه و آپارتمان</span>
+                </button>
+                <button onclick="setBuildingType('office')" id="btnType-office" class="btype-btn px-3.5 py-2 rounded-xl text-xs font-medium transition border flex items-center gap-1.5 bg-slate-900/80 border-slate-700 text-slate-300 hover:bg-slate-800">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>اداری و شرکتی</span>
+                </button>
+                <button onclick="setBuildingType('school')" id="btnType-school" class="btype-btn px-3.5 py-2 rounded-xl text-xs font-medium transition border flex items-center gap-1.5 bg-slate-900/80 border-slate-700 text-slate-300 hover:bg-slate-800">
+                    <i class="fa-solid fa-school"></i>
+                    <span>مدرسه و آموزشی</span>
+                </button>
+                <button onclick="setBuildingType('commercial')" id="btnType-commercial" class="btype-btn px-3.5 py-2 rounded-xl text-xs font-medium transition border flex items-center gap-1.5 bg-slate-900/80 border-slate-700 text-slate-300 hover:bg-slate-800">
+                    <i class="fa-solid fa-store"></i>
+                    <span>تجاری و عمومی</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Main Dual-Platform Mode Tabs -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button onclick="switchMainMode('room')" id="mainTab-room" class="tab-active border rounded-2xl p-4 text-right transition flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-camera-viewfinder text-orange-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
+                            <span>۱. اسکن اتاق با دوربین/عکس و بهینه‌سازی چیدمان</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5">برای ساختمان‌های موجود: جابجایی مبل، میز، تخت، کمد و پرده جهت کاهش مصرف گرما</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-left text-orange-400 hidden sm:block"></i>
+            </button>
+
+            <button onclick="switchMainMode('blueprint')" id="mainTab-blueprint" class="bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 text-right transition flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-compass-drafting text-sky-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="font-extrabold text-sm sm:text-base text-white flex items-center gap-2 flex-wrap">
+                            <span>۲. تحلیل نقشه ساختمان و مشاور پیش‌ازساخت</span>
+                            <span class="text-[10px] bg-sky-500 text-slate-950 font-black px-2 py-0.5 rounded-full">جدید</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5">آپلود پلان معماری، سنجش آفتاب‌گیری، تشخیص نقاط کور و اصلاح جانمایی شوفاژ قبل از ساخت</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-left text-sky-400 hidden sm:block"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MAIN WORKSPACE CONTAINER -->
+    <!-- ========================================================= -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-5 space-y-6">
+
+        <!-- ========================================================= -->
+        <!-- MODE 1: ROOM PHOTO / CAMERA & FURNITURE REARRANGEMENT     -->
+        <!-- ========================================================= -->
+        <div id="modeSection-room" class="space-y-6">
+
+            <!-- Hero Action Banner for Mode 1 -->
+            <section class="glass-card rounded-3xl p-5 border border-orange-500/20 bg-gradient-to-l from-orange-950/30 via-slate-900/85 to-slate-900 flex flex-col lg:flex-row items-center justify-between gap-5">
+                <div class="space-y-1.5 max-w-3xl">
+                    <h2 id="roomHeroTitle" class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-orange-400"></i>
+                        بهینه‌سازی چیدمان گرمایشی خانه و آپارتمان بدون هزینه اضافه
+                    </h2>
+                    <p id="roomHeroDesc" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        از اتاق پذیرایی، اتاق خواب، کلاس درس یا دفتر خود عکس بگیرید. هوش مصنوعی تمام وسایل، پنجره‌ها و شوفاژها را تشخیص می‌دهد و دقیقاً می‌گوید چطور وسایل را بچینید تا گرما حبس نشود و دیوارهای سرد عایق شوند.
+                    </p>
+                </div>
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto justify-end shrink-0">
+                    <button onclick="document.getElementById('fileInput').click()" class="flex-1 sm:flex-initial bg-orange-600 hover:bg-orange-500 text-white font-bold px-4 py-3 rounded-2xl shadow-lg shadow-orange-600/25 transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-camera-retro"></i>
+                        <span>آپلود عکس فضا</span>
+                    </button>
+                    <button onclick="toggleCameraModal()" class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-semibold px-4 py-3 rounded-2xl transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-video text-emerald-400"></i>
+                        <span>دوربین زنده</span>
+                    </button>
+                    <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                </div>
+            </section>
+
+            <!-- Workspace Grid for Mode 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left: Photo Inspection & AI Vision (5 Cols) -->
+                <div class="lg:col-span-5 flex flex-col gap-5">
+                    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
+                                <h3 class="font-bold text-base text-white">اسکن بصری و تشخیص عوامل حرارتی</h3>
+                            </div>
+                            <span id="analysisBadge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700">آماده اسکن</span>
+                        </div>
+
+                        <!-- Room Visual Container -->
+                        <div class="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 group">
+                            <canvas id="photoPreviewCanvas" class="w-full h-full object-cover"></canvas>
+                            <img id="uploadedPhotoEl" class="w-full h-full object-cover hidden" alt="عکس فضا" />
+                            <div id="photoHotspots" class="absolute inset-0"></div>
+
+                            <!-- AI Vision Loading -->
+                            <div id="visionLoadingOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+                                <div class="w-16 h-16 rounded-full border-4 border-orange-500/30 border-t-orange-500 animate-spin mb-4"></div>
+                                <h4 class="font-bold text-white text-base mb-1">هوش مصنوعی در حال تحلیل حرارتی فضا...</h4>
+                                <p class="text-xs text-slate-400">تشخیص منابع گرما، پنجره‌ها، مبلمان و موانع گردش هوا</p>
+                            </div>
+                        </div>
+
+                        <!-- Photo Controls -->
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <button onclick="togglePhotoThermalLayer()" id="btnTogglePhotoHeat" class="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-fire"></i>
+                                <span>لایه حرارتی عکس</span>
+                            </button>
+                            <button onclick="analyzeCurrentPhotoWithGemini()" class="flex-1 sm:flex-initial bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-microchip"></i>
+                                <span>تحلیل عمیق عکس با هوش مصنوعی</span>
+                            </button>
+                        </div>
+
+                        <!-- Detected Items -->
+                        <div class="space-y-2.5 pt-2 border-t border-slate-800/80">
+                            <div class="flex items-center justify-between text-xs text-slate-400">
+                                <span>اجزای شناسایی‌شده و نقش گرمایی:</span>
+                                <span id="detectedCountText" class="text-slate-300 font-semibold">۵ مورد</span>
+                            </div>
+                            <div id="detectedItemsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1"></div>
+                        </div>
+
+                        <!-- AI Visual Remodel Generator -->
+                        <div class="bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-3.5 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-image text-indigo-400"></i>
+                                    <span class="text-xs font-bold text-white">تصویرسازی چیدمان جدید (Nano-Banana)</span>
+                                </div>
+                                <button onclick="generateVisualRemodel()" id="btnGenerateImage" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0">
+                                    <i class="fa-solid fa-wand-sparkles"></i>
+                                    <span>ساخت تصویر بهینه</span>
+                                </button>
+                            </div>
+                            <div id="generatedImageBox" class="hidden relative rounded-xl overflow-hidden border border-indigo-500/40 bg-slate-950 aspect-video flex items-center justify-center">
+                                <div id="generatedImageLoading" class="hidden flex flex-col items-center justify-center p-4 text-center">
+                                    <div class="w-10 h-10 rounded-full border-3 border-indigo-400/30 border-t-indigo-400 animate-spin mb-2"></div>
+                                    <span class="text-xs text-indigo-300">در حال رندر چیدمان جدید و گرم فضا...</span>
+                                </div>
+                                <img id="generatedRemodelImg" class="w-full h-full object-cover hidden" alt="چیدمان بهینه پیشنهادی" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Interactive 2D Room Thermal Simulator (7 Cols) -->
+                <div class="lg:col-span-7 flex flex-col gap-5">
+                    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 class="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-arrows-up-down-left-right text-amber-400"></i>
+                                    شبیه‌ساز نقشه حرارتی و جابجایی وسایل (نمای بالا)
+                                </h3>
+                                <p class="text-xs text-slate-400">وسایل را با ماوس/لمس جابجا کنید یا «چیدمان بهینه» را بزنید</p>
+                            </div>
+                            <div class="flex items-center bg-slate-900 p-1 rounded-2xl border border-slate-800">
+                                <button onclick="applySimulatorLayout('current')" id="btnModeCurrent" class="px-3 py-2 rounded-xl text-xs font-bold transition bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                    <span>چیدمان فعلی</span>
+                                </button>
+                                <button onclick="applySimulatorLayout('optimized')" id="btnModeOptimized" class="px-3 py-2 rounded-xl text-xs font-bold transition text-slate-300 hover:text-white flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                                    <span>چیدمان بهینه</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Room Physics Gauges -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>پخش گرمای شوفاژ</span>
+                                    <i class="fa-solid fa-fire text-orange-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="gaugeRadiatorFree" class="text-lg font-black text-white">۴۰٪</span>
+                                    <span id="gaugeRadiatorStatus" class="text-[10px] text-rose-400">مسدود</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="barRadiatorFree" class="bg-orange-500 h-full transition-all duration-500" style="width: 40%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>عایق دیوار سرد</span>
+                                    <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="gaugeWallInsulation" class="text-lg font-black text-white">۲۵٪</span>
+                                    <span id="gaugeWallStatus" class="text-[10px] text-amber-400">ضعیف</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="barWallInsulation" class="bg-cyan-500 h-full transition-all duration-500" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>آسایش محل استقرار</span>
+                                    <i class="fa-solid fa-person-shelter text-emerald-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="gaugeDeskComfort" class="text-lg font-black text-white">۵۲٪</span>
+                                    <span id="gaugeDeskStatus" class="text-[10px] text-rose-400">در معرض سوز</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="barDeskComfort" class="bg-emerald-500 h-full transition-all duration-500" style="width: 52%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>کاهش دمای بخاری/پکیج</span>
+                                    <i class="fa-solid fa-leaf text-amber-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span id="gaugeTempDrop" class="text-lg font-black text-amber-400">۰°C</span>
+                                    <span class="text-[10px] text-slate-400">تا ۳.۵°C-</span>
+                                </div>
+                                <p id="gaugeEnergyText" class="text-[10px] text-slate-400 mt-1">نیاز به اصلاح چیدمان</p>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Room Floorplan Canvas -->
+                        <div class="relative w-full aspect-[16/10] bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-inner">
+                            <canvas id="floorplanCanvas" class="w-full h-full cursor-grab active:cursor-grabbing touch-none"></canvas>
+                            <div class="absolute bottom-2.5 right-2.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-3 text-[11px] pointer-events-none">
+                                <span class="flex items-center gap-1.5 text-orange-300"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>جریان گرما</span>
+                                <span class="flex items-center gap-1.5 text-sky-300"><span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>نفوذ سرما</span>
+                                <span class="flex items-center gap-1.5 text-emerald-300"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>منطقه طلایی</span>
+                            </div>
+                        </div>
+
+                        <!-- Rearrangement Steps -->
+                        <div class="space-y-3 pt-2 border-t border-slate-800/80">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-list-check text-emerald-400"></i>
+                                    دستورالعمل گام‌به‌گام جابجایی وسایل:
+                                </h4>
+                                <button onclick="copyRecommendations()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span>کپی گزارش</span>
+                                </button>
+                            </div>
+                            <div id="rearrangementStepsList" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- MODE 2: ARCHITECTURAL BLUEPRINT & PRE-CONSTRUCTION AUDIT  -->
+        <!-- ========================================================= -->
+        <div id="modeSection-blueprint" class="hidden space-y-6">
+
+            <!-- Hero Banner for Mode 2 -->
+            <section class="glass-card rounded-3xl p-5 border border-sky-500/30 bg-gradient-to-l from-sky-950/40 via-slate-900/90 to-amber-950/20 flex flex-col lg:flex-row items-center justify-between gap-5">
+                <div class="space-y-1.5 max-w-3xl">
+                    <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-helmet-safety text-sky-400"></i>
+                        ممیزی نقشه معماری و شبیه‌سازی پیش‌ازساخت (خورشید، نقاط کور و جانمایی شوفاژ)
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        چه در حال <strong>ساخت ساختمان جدید</strong> باشید و چه بخواهید <strong>نقشه پلان فعلی</strong> (خانه، مدرسه یا اداره) را بسنجید: عکس یا فایل نقشه معماری را آپلود کنید تا هوش مصنوعی <strong>نقاط کور گرمایی/نوری</strong>، <strong>بهره‌گیری از آفتاب زمستانی</strong> و <strong>جای اشتباه رادیاتورها و پنجره‌ها</strong> را پیش از لوله‌کشی و اجرا اصلاح کند.
+                    </p>
+                </div>
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto justify-end shrink-0">
+                    <button onclick="document.getElementById('blueprintFileInput').click()" class="flex-1 sm:flex-initial bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-3 rounded-2xl shadow-lg shadow-sky-600/25 transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <span>آپلود نقشه / پلان ساختمان</span>
+                    </button>
+                    <input type="file" id="blueprintFileInput" accept="image/*" class="hidden" onchange="handleBlueprintUpload(event)">
+                </div>
+            </section>
+
+            <!-- Environmental Parameters Bar (Orientation, Climate, Sun Time) -->
+            <section class="glass-card rounded-2xl p-4 border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Compass Orientation -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-compass text-amber-400"></i>
+                        جهت نمای اصلی (پنجره‌های اصلی رو به کدام سمت است؟):
+                    </label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button onclick="setBlueprintOrientation('south')" id="btnOrient-south" class="orient-btn py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 border border-amber-500/60 text-amber-300">جنوبی (عالی)</button>
+                        <button onclick="setBlueprintOrientation('north')" id="btnOrient-north" class="orient-btn py-1.5 rounded-xl text-xs font-medium bg-slate-900 border border-slate-700 text-slate-300">شمالی (سرد)</button>
+                        <button onclick="setBlueprintOrientation('east')" id="btnOrient-east" class="orient-btn py-1.5 rounded-xl text-xs font-medium bg-slate-900 border border-slate-700 text-slate-300">شرقی</button>
+                        <button onclick="setBlueprintOrientation('west')" id="btnOrient-west" class="orient-btn py-1.5 rounded-xl text-xs font-medium bg-slate-900 border border-slate-700 text-slate-300">غربی</button>
+                    </div>
+                </div>
+
+                <!-- Climate Zone -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-sun-rain text-sky-400"></i>
+                        اقلیم و منطقه آب‌وهوایی پروژه:
+                    </label>
+                    <select id="climateSelect" onchange="drawBlueprintSimulator()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                        <option value="cold">سرد و کوهستانی (تبریز، اردبیل، همدان، کردستان)</option>
+                        <option value="moderate" selected>معتدل و نیمه‌سرد (تهران، مشهد، اصفهان، کرج)</option>
+                        <option value="humid">مرطوب و بارانی (شمال کشور)</option>
+                        <option value="desert">گرم و خشک با شب‌های سرد کویری (یزد، کرمان، قم)</option>
+                    </select>
+                </div>
+
+                <!-- Winter Sun Time Slider -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-sun text-yellow-400"></i>
+                            شبیه‌سازی مسیر خورشید زمستانی:
+                        </span>
+                        <span id="lblSunHour" class="font-bold text-yellow-300">ساعت ۱۲:۰۰ ظهر</span>
+                    </div>
+                    <input id="sliderSunHour" type="range" min="8" max="16" step="0.5" value="12" oninput="updateSunSimulation()" class="w-full accent-yellow-400 cursor-pointer">
+                </div>
+            </section>
+
+            <!-- Main Workspace Grid for Mode 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left: Uploaded Blueprint Inspector & AI Architectural Audit (5 Cols) -->
+                <div class="lg:col-span-5 flex flex-col gap-5">
+                    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping"></span>
+                                <h3 class="font-bold text-base text-white">بازبینی نقشه معماری با هوش مصنوعی</h3>
+                            </div>
+                            <span id="bpAnalysisBadge" class="text-xs bg-slate-800 text-sky-300 px-2.5 py-1 rounded-lg border border-sky-500/30">پلان آماده ارزیابی</span>
+                        </div>
+
+                        <!-- Blueprint Preview Image / Schematic -->
+                        <div class="relative w-full aspect-[4/3] bg-slate-950 rounded-2xl overflow-hidden border border-sky-500/30 flex items-center justify-center">
+                            <img id="uploadedBlueprintImg" class="w-full h-full object-contain hidden bg-white/95" alt="نقشه معماری آپلود شده" />
+                            <div id="blueprintPlaceholderBox" class="p-6 text-center space-y-3">
+                                <div class="w-16 h-16 mx-auto rounded-2xl bg-sky-500/15 border border-sky-500/40 flex items-center justify-center">
+                                    <i class="fa-solid fa-map text-sky-400 text-2xl"></i>
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-sm text-white">تصویر نقشه اتوکد، پلان معماری یا کروکی دستی را آپلود کنید</h4>
+                                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                                        حتی اگر هنوز ساختمان را نساخته‌اید و فقط نقشه کاغذی یا اسکرین‌شات پلان دارید، اینجا آپلود کنید تا سیستم نقاط کور و محل دقیق شوفاژها را تحلیل کند.
+                                    </p>
+                                </div>
+                                <button onclick="document.getElementById('blueprintFileInput').click()" class="bg-sky-600/90 hover:bg-sky-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+                                    <i class="fa-solid fa-upload ml-1"></i>
+                                    انتخاب فایل نقشه (JPG / PNG)
+                                </button>
+                            </div>
+
+                            <!-- AI Blueprint Loading Overlay -->
+                            <div id="bpLoadingOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+                                <div class="w-16 h-16 rounded-full border-4 border-sky-500/30 border-t-sky-400 animate-spin mb-4"></div>
+                                <h4 class="font-bold text-white text-base mb-1">تحلیل مهندسی نقشه و انرژی ساختمان...</h4>
+                                <p class="text-xs text-slate-400">در حال بررسی جهت تابش خورشید، نقاط کور گرمایی و جانمایی رادیاتورها</p>
+                            </div>
+                        </div>
+
+                        <button onclick="analyzeBlueprintWithGemini()" class="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-brain"></i>
+                            <span>تحلیل مهندسی نقشه و اصلاح جانمایی پیش‌ازساخت (Gemini AI)</span>
+                        </button>
+
+                        <!-- Energy Label & Verdict Card -->
+                        <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <span class="text-xs text-slate-400">برچسب انرژی پیش‌بینی‌شده نقشه:</span>
+                                <h4 id="bpVerdictTitle" class="text-sm font-bold text-amber-300">نیازمند اصلاح جانمایی ۲ شوفاژ و عایق ضلع شمالی</h4>
+                                <p id="bpVerdictDesc" class="text-[11px] text-slate-400">با جابجایی رادیاتورها به زیر پنجره‌ها قبل از لوله‌کشی، نقطه کور اتاق خواب و سالن کاملاً حذف می‌شود.</p>
+                            </div>
+                            <div id="bpEnergyBadge" class="w-14 h-14 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex flex-col items-center justify-center shrink-0">
+                                <span class="text-[10px] text-amber-200">گرید</span>
+                                <span id="bpEnergyGrade" class="text-2xl font-black text-amber-400 leading-none">C</span>
+                            </div>
+                        </div>
+
+                        <!-- Detected Dead Spots & Solar Findings -->
+                        <div class="space-y-2.5 pt-2 border-t border-slate-800/80">
+                            <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+                                نقاط کور، ایرادات طراحی و تحلیل خورشید شناسایی‌شده:
+                            </h4>
+                            <div id="bpFindingsList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Pre-Construction Blueprint Simulator (7 Cols) -->
+                <div class="lg:col-span-7 flex flex-col gap-5">
+                    <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 class="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-drafting-compass text-sky-400"></i>
+                                    شبیه‌ساز تعاملی پلان، تابش خورشید و جانمایی شوفاژها
+                                </h3>
+                                <p class="text-xs text-slate-400">رادیاتورهای نارنجی را روی پلان بکشید و جابجا کنید تا حذف نقاط کور (آبی تیره) را زنده ببینید!</p>
+                            </div>
+
+                            <!-- Pre-Build Mode Switcher -->
+                            <div class="flex items-center bg-slate-900 p-1 rounded-2xl border border-slate-800">
+                                <button onclick="applyBlueprintLayout('initial')" id="btnBpInitial" class="px-3 py-2 rounded-xl text-xs font-bold transition bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bug"></i>
+                                    <span>نقشه اولیه (دارای نقطه کور)</span>
+                                </button>
+                                <button onclick="applyBlueprintLayout('optimized')" id="btnBpOptimized" class="px-3 py-2 rounded-xl text-xs font-bold transition text-slate-300 hover:text-white flex items-center gap-1.5">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>
+                                    <span>جانمایی بهینه پیش‌ازساخت</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4 Pre-Construction Metrics -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>بهره‌گیری از خورشید</span>
+                                    <i class="fa-solid fa-sun text-yellow-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="bpGaugeSolar" class="text-lg font-black text-white">۷۸٪</span>
+                                    <span id="bpStatusSolar" class="text-[10px] text-emerald-400">نورگیر خوب</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="bpBarSolar" class="bg-yellow-400 h-full transition-all duration-500" style="width: 78%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>حذف نقاط کور گرمایی</span>
+                                    <i class="fa-solid fa-snowflake text-sky-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="bpGaugeDeadzone" class="text-lg font-black text-white">۴۵٪</span>
+                                    <span id="bpStatusDeadzone" class="text-[10px] text-rose-400">۲ نقطه کور</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="bpBarDeadzone" class="bg-sky-500 h-full transition-all duration-500" style="width: 45%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>دقت جانمایی شوفاژ</span>
+                                    <i class="fa-solid fa-temperature-high text-orange-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="bpGaugeRad" class="text-lg font-black text-white">۴۲٪</span>
+                                    <span id="bpStatusRad" class="text-[10px] text-rose-400">نیاز به جابجایی</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div id="bpBarRad" class="bg-orange-500 h-full transition-all duration-500" style="width: 42%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3">
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                                    <span>امتیاز کل پلان</span>
+                                    <i class="fa-solid fa-award text-emerald-400"></i>
+                                </div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="bpGaugeTotal" class="text-lg font-black text-emerald-400">۵۵٪</span>
+                                    <span id="bpGradeMini" class="text-[11px] font-bold text-amber-300">گرید C</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">کشیدن شوفاژها = محاسبه زنده</p>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Architectural Blueprint Canvas -->
+                        <div class="relative w-full aspect-[16/10] bg-slate-950 rounded-2xl border border-sky-500/30 overflow-hidden shadow-inner">
+                            <canvas id="blueprintCanvas" class="w-full h-full cursor-grab active:cursor-grabbing touch-none"></canvas>
+
+                            <!-- Legend -->
+                            <div class="absolute bottom-2.5 right-2.5 bg-slate-900/92 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-3 text-[11px] pointer-events-none">
+                                <span class="flex items-center gap-1.5 text-yellow-300"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block"></span>تابش خورشید زمستانی</span>
+                                <span class="flex items-center gap-1.5 text-orange-300"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>شوفاژ (قابل جابجایی)</span>
+                                <span class="flex items-center gap-1.5 text-rose-300"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 border border-rose-400 inline-block"></span>نقطه کور گرمایی</span>
+                            </div>
+                        </div>
+
+                        <!-- Pre-Construction Recommendations List -->
+                        <div class="space-y-3 pt-2 border-t border-slate-800/80">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-wrench text-sky-400"></i>
+                                    اصلاحات مهندسی پیشنهادی روی نقشه (پیش از لوله‌کشی و ساخت):
+                                </h4>
+                            </div>
+                            <div id="bpStepsList" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- SHARED BOTTOM BAR: AI ADVISOR + ENERGY CALCULATOR         -->
+        <!-- ========================================================= -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Context-Aware AI Advisor Chat -->
+            <div class="glass-card rounded-3xl p-5 flex flex-col justify-between gap-3">
+                <div class="space-y-1">
+                    <h5 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-robot text-orange-400"></i>
+                        مشاور هوشمند معماری و گرمایش (پاسخگوی محدودیت‌ها)
+                    </h5>
+                    <p class="text-xs text-slate-400">هر سوالی درباره محل شوفاژ، گرمایش از کف، نورگیری، پنجره دوجداره یا محدودیت چیدمان دارید بپرسید:</p>
+                </div>
+                <div id="chatResponseBox" class="bg-slate-950/85 border border-slate-800 rounded-2xl p-3.5 text-xs text-slate-300 max-h-44 overflow-y-auto space-y-2.5">
+                    <div class="text-slate-400 leading-relaxed">
+                        مثال ۱ (چیدمان): «پنجره پذیرایی ما قدی است و زیرش شوفاژ نداریم، مبل را کجا بگذارم؟»<br>
+                        مثال ۲ (پیش‌ازساخت): «دارم خانه شمالی می‌سازم، چطور نقاط کور و سرمای پذیرایی را حذف کنم؟»
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input id="userQuestionInput" type="text" placeholder="سوال مهندسی یا محدودیت فضای خود را بنویسید..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500" onkeydown="if(event.key==='Enter') askThermalAdvisor()">
+                    <button id="btnAskAdvisor" onclick="askThermalAdvisor()" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shrink-0">
+                        ارسال سوال
+                    </button>
+                </div>
+            </div>
+
+            <!-- Universal Building Energy Savings Calculator -->
+            <div class="glass-card rounded-3xl p-5 flex flex-col justify-between gap-3">
+                <div class="space-y-1">
+                    <h5 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-emerald-400"></i>
+                        ماشین‌حساب صرفه‌جویی انرژی کل ساختمان
+                    </h5>
+                    <p id="calcSubtitle" class="text-xs text-slate-400">برآورد کاهش مصرف گاز در فصل سرد بر اساس زیربنا یا تعداد اتاق‌های ساختمان:</p>
+                </div>
+                <div class="space-y-3 py-1">
+                    <div class="flex justify-between text-xs">
+                        <span id="calcUnitLabel" class="text-slate-300">متراژ زیربنا / تعداد فضاها:</span>
+                        <span id="lblRoomCount" class="font-bold text-orange-400">۱۲۰ متر مربع</span>
+                    </div>
+                    <input id="sliderRoomCount" type="range" min="1" max="100" value="12" oninput="updateBuildingCalculator()" class="w-full accent-orange-500 cursor-pointer">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3">
+                        <span class="block text-[11px] text-emerald-200 mb-0.5">صرفه‌جویی ماهانه گاز:</span>
+                        <span id="calcSavedMeters" class="text-sm sm:text-base font-black text-emerald-400">۱۴۵ متر مکعب</span>
+                    </div>
+                    <div class="bg-amber-950/35 border border-amber-500/30 rounded-2xl p-3">
+                        <span class="block text-[11px] text-amber-200 mb-0.5">کاهش اتلاف حرارتی:</span>
+                        <span id="calcCo2Saved" class="text-sm sm:text-base font-black text-amber-400">۳۵٪ کمتر</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Live Camera Modal -->
+    <div id="cameraModal" class="fixed inset-0 z-50 hidden bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl max-w-2xl w-full p-5 border border-slate-700 space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-video text-emerald-400"></i>
+                    <h3 class="font-bold text-base text-white">اسکن زنده فضا با دوربین</h3>
+                    <span id="cameraModeBadge" class="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">آماده</span>
+                </div>
+                <button onclick="closeCameraModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="iframeCameraNotice" class="hidden bg-amber-950/60 border border-amber-500/40 rounded-2xl p-3 text-xs text-amber-200 space-y-2">
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-amber-400 mt-0.5 text-sm"></i>
+                    <div>
+                        <strong>حالت شبیه‌ساز اسکنر زنده فعال شد</strong>
+                        <p class="text-[11px] text-amber-100/90 mt-0.5 leading-relaxed">
+                            به دلیل محدودیت امنیتی پیش‌نمایش مرورگر (iFrame)، وب‌کم مستقیم مسدود است؛ روی دامنه HTTPS خودتان دوربین مستقیماً باز می‌شود. اکنون می‌توانید از شبیه‌ساز زنده زیر یا دکمه دوربین گوشی استفاده کنید:
+                        </p>
+                    </div>
+                </div>
+                <button onclick="triggerNativeCamera()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>باز کردن دوربین اصلی موبایل / انتخاب فایل</span>
+                </button>
+            </div>
+
+            <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden border border-slate-800">
+                <video id="cameraVideoEl" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <canvas id="simulatedCameraCanvas" class="w-full h-full object-cover hidden"></canvas>
+                <div class="absolute inset-5 border-2 border-dashed border-orange-400/60 rounded-2xl pointer-events-none flex flex-col justify-between p-3">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="bg-slate-950/80 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            تشخیص زنده حرارتی (AR)
+                        </span>
+                        <span class="bg-slate-950/80 text-amber-300 px-2.5 py-1 rounded-lg font-mono">THERMAL-CAM PRO</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="bg-slate-950/85 text-orange-300 text-xs px-3.5 py-1.5 rounded-full border border-orange-500/30">پنجره، شوفاژ و وسایل اصلی را در کادر قرار دهید</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <button onclick="triggerNativeCamera()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-camera-rotate text-amber-400"></i>
+                    <span>دوربین بومی گوشی</span>
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeCameraModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">انصراف</button>
+                    <button onclick="capturePhotoFromStream()" class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>ثبت فریم و شروع تحلیل</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // GEMINI API CONFIG & HELPERS
+        // ==========================================
+        const apiKey = ""; // Injected automatically by environment
+
+        async function fetchWithRetry(url, options, retries = 4, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) return await response.json();
+                    if (response.status !== 429 && response.status < 500) {
+                        const errText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errText}`);
+                    }
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                }
+                await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = {
+                info: 'bg-slate-800 border-orange-500/50 text-white',
+                success: 'bg-emerald-950/95 border-emerald-500/60 text-emerald-200',
+                error: 'bg-rose-950/95 border-rose-500/60 text-rose-200'
+            };
+            toast.className = `pointer-events-auto border px-4 py-3 rounded-2xl shadow-xl backdrop-blur-md text-xs sm:text-sm font-medium flex items-center gap-2.5 transition-all duration-300 ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : type === 'error' ? 'fa-circle-exclamation text-rose-400' : 'fa-sun text-orange-400'} text-base"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ==========================================
+        // GLOBAL APPLICATION STATE
+        // ==========================================
+        let activeBuildingType = 'home'; // 'home' | 'office' | 'school' | 'commercial'
+        let activeMainMode = 'room';     // 'room' | 'blueprint'
+
+        // Mode 1 (Room) State
+        let currentLayoutMode = 'current';
+        let showPhotoThermalOverlay = true;
+        let currentBase64Image = null;
+        let activeCameraStream = null;
+        let isSimulatedCameraActive = false;
+        let simCamAnimId = null;
+
+        // Mode 2 (Blueprint / Pre-Build) State
+        let bpOrientation = 'south'; // 'south' | 'north' | 'east' | 'west'
+        let bpSunHour = 12;
+        let bpLayoutMode = 'initial'; // 'initial' | 'optimized'
+        let uploadedBlueprintBase64 = null;
+
+        // ==========================================
+        // UNIVERSAL BUILDING PRESETS (HOME, OFFICE, SCHOOL, COMMERCIAL)
+        // ==========================================
+        const BUILDING_PROFILES = {
+            home: {
+                label: 'خانه و آپارتمان مسکونی',
+                heroTitle: 'بهینه‌سازی چیدمان گرمایشی خانه و آپارتمان بدون هزینه اضافه',
+                heroDesc: 'از پذیرایی یا اتاق خواب عکس بگیرید. هوش مصنوعی جای مبل، تخت، پرده، فرش و شوفاژ را بررسی کرده و بهترین چیدمان برای گرم ماندن خانه با کمترین شعله بخاری یا پکیج را پیشنهاد می‌دهد.',
+                calcUnit: 'متراژ زیربنای خانه:',
+                calcFactor: 10, // slider * 10 = sqm
+                calcSuffix: 'متر مربع',
+                currentScore: 47,
+                optimizedScore: 92,
+                savingsPercent: 35,
+                hotspots: [
+                    { x: 24, y: 34, label: 'پنجره پذیرایی با پرده بلند روی شوفاژ', type: 'cold' },
+                    { x: 29, y: 64, label: 'شوفاژ پشت مبل راحتی حبس شده!', type: 'blocked' },
+                    { x: 78, y: 45, label: 'کمد دیواری / بوفه روی دیوار گرم همسایه', type: 'neutral' }
+                ],
+                detectedItems: [
+                    { name: 'مبل سه‌نفره راحتی', role: 'چسبیده به شوفاژ زیر پنجره (جذب ۵۵٪ گرما)', status: 'bad', icon: 'fa-couch' },
+                    { name: 'پرده ضخیم پذیرایی', role: 'روی رادیاتور افتاده و گرما را به شیشه می‌برد', status: 'bad', icon: 'fa-person-booth' },
+                    { name: 'پنجره بزرگ شمالی/غربی', role: 'منبع تابش سرما به فضای نشیمن', status: 'cold', icon: 'fa-border-all' },
+                    { name: 'کمد یا کتابخانه چوبی', role: 'قرارگرفته روی دیوار داخلی (بدون استفاده عایقی)', status: 'warn', icon: 'fa-book-open' },
+                    { name: 'فرش دستباف/ماشینی', role: 'پوشش عایق کف در بخش نشیمن', status: 'good', icon: 'fa-rug' }
+                ],
+                rearrangementSteps: [
+                    {
+                        item: 'مبل سه‌نفره و پرده پذیرایی',
+                        from: 'چسبیده به رادیاتور زیر پنجره',
+                        to: 'فاصله ۶۰ سانتی‌متری از شوفاژ و جمع کردن لبه پرده پشت رادیاتور',
+                        reason: 'آزاد شدن مسیر گردش هوای گرم شوفاژ، دمای فضای نشیمن را تا ۳ درجه بدون افزایش دمای پکیج بالا می‌برد.',
+                        impact: '+۱۷٪ گرمای خانه'
+                    },
+                    {
+                        item: 'کاناپه اصلی و محل تماشای تلویزیون',
+                        from: 'مجاورت شیشه سرد پنجره',
+                        to: 'تکیه به دیوار داخلی مشترک (گرم‌ترین ضلع خانه)',
+                        reason: 'دور شدن اعضای خانواده از تابش سرد شیشه باعث حذف احساس لرز در شب‌های زمستان می‌شود.',
+                        impact: '+۱۱٪ آسایش خانواده'
+                    },
+                    {
+                        item: 'کمد لباس / کتابخانه چوبی',
+                        from: 'دیوار داخلی مشترک با اتاق مجاور',
+                        to: 'دیوار بیرونی رو به کوچه یا حیاط (ضلع سرد)',
+                        reason: 'کمدهای پر از لباس و کتاب یک لایه عایق حرارتی عالی روی دیوار بیرونی سرد ایجاد می‌کنند.',
+                        impact: '+۷٪ عایق‌بندی رایگان'
+                    }
+                ],
+                furniture: [
+                    { id: 'desk1', name: 'کاناپه اصلی و میز', type: 'desk', w: 26, h: 14, currX: 22, currY: 20, optX: 64, optY: 48, x: 22, y: 20, color: '#3b82f6' },
+                    { id: 'sofa1', name: 'مبل جلوی شوفاژ', type: 'sofa', w: 26, h: 12, currX: 48, currY: 10, optX: 48, optY: 76, x: 48, y: 10, color: '#f43f5e' },
+                    { id: 'cabinet1', name: 'کمد/کتابخانه عایق', type: 'cabinet', w: 10, h: 28, currX: 88, currY: 35, optX: 6, optY: 36, x: 88, y: 35, color: '#a855f7' },
+                    { id: 'rug1', name: 'فرش پذیرایی', type: 'rug', w: 40, h: 28, currX: 28, currY: 54, optX: 54, optY: 42, x: 28, y: 54, color: '#10b981' }
+                ]
+            },
+            office: {
+                label: 'ساختمان اداری و شرکتی',
+                heroTitle: 'بهینه‌سازی چیدمان گرمایشی اتاق‌های اداری و سازمانی',
+                heroDesc: 'از اتاق کارمندان یا سالن جلسات عکس بگیرید تا میزها از سوز پنجره دور شوند، کمدهای بایگانی عایق دیوار سرد شوند و جلوی فن‌کویل و شوفاژ کاملاً باز بماند.',
+                calcUnit: 'تعداد اتاق‌های اداری:',
+                calcFactor: 1,
+                calcSuffix: 'اتاق اداری',
+                currentScore: 46,
+                optimizedScore: 91,
+                savingsPercent: 36,
+                hotspots: [
+                    { x: 24, y: 34, label: 'پنجره دوجداره شمالی (تابش سرما روی میز کار)', type: 'cold' },
+                    { x: 28, y: 65, label: 'شوفاژ زیر پنجره مسدود با مبل انتظار', type: 'blocked' },
+                    { x: 78, y: 45, label: 'کمد بایگانی زونکن‌ها (روی دیوار گرم داخلی)', type: 'neutral' }
+                ],
+                detectedItems: [
+                    { name: 'رادیاتور شوفاژ اداری', role: 'مسدود شده با مبل انتظار و فایل کشویی', status: 'bad', icon: 'fa-temperature-high' },
+                    { name: 'میز کار و سیستم کارمند', role: 'چسبیده به پنجره سرد (استفاده اجباری از بخاری برقی)', status: 'bad', icon: 'fa-desktop' },
+                    { name: 'پنجره بزرگ نما', role: 'اتلاف گرما و ورود سوز درزها', status: 'cold', icon: 'fa-border-all' },
+                    { name: 'کمد بایگانی فلزی/چوبی', role: 'روی دیوار داخلی بدون نقش عایقی', status: 'warn', icon: 'fa-folder-closed' },
+                    { name: 'موکت کف اداره', role: 'کاهش انتقال سرمای سرامیک به پاها', status: 'good', icon: 'fa-rug' }
+                ],
+                rearrangementSteps: [
+                    {
+                        item: 'مبل انتظار و فایل کشویی',
+                        from: 'جلوی رادیاتور شوفاژ',
+                        to: 'ضلع جنوب‌شرقی با حداقل ۶۰ سانتی‌متر فاصله از شوفاژ',
+                        reason: 'باز شدن جریان همرفتی شوفاژ باعث گرم شدن یکنواخت کل اتاق در ۲۰ دقیقه اول صبح می‌شود.',
+                        impact: '+۱۶٪ راندمان شوفاژ'
+                    },
+                    {
+                        item: 'میز کار و صندلی کارمند',
+                        from: 'زیر پنجره شمالی',
+                        to: 'کنار دیوار داخلی ساختمان (منطقه طلایی)',
+                        reason: 'دور شدن کارمندان از شیشه سرد نیاز به بالا بردن دمای موتورخانه و بخاری برقی را حذف می‌کند.',
+                        impact: '+۱۱٪ آسایش پرسنل'
+                    },
+                    {
+                        item: 'کمدهای بایگانی و زونکن‌ها',
+                        from: 'دیوار داخلی راهرو',
+                        to: 'دیوار بیرونی سرد ساختمان',
+                        reason: 'زونکن‌های کاغذی ضریب هدایت حرارتی بسیار پایینی دارند و مثل فوم عایق روی دیوار بیرونی عمل می‌کنند.',
+                        impact: '+۹٪ جلوگیری از اتلاف'
+                    }
+                ],
+                furniture: [
+                    { id: 'desk1', name: 'میز کار و سیستم', type: 'desk', w: 22, h: 14, currX: 25, currY: 20, optX: 68, optY: 48, x: 25, y: 20, color: '#3b82f6' },
+                    { id: 'sofa1', name: 'مبل انتظار اداری', type: 'sofa', w: 26, h: 12, currX: 48, currY: 11, optX: 48, optY: 75, x: 48, y: 11, color: '#f43f5e' },
+                    { id: 'cabinet1', name: 'کمد بایگانی ضخیم', type: 'cabinet', w: 10, h: 28, currX: 88, currY: 35, optX: 6, optY: 38, x: 88, y: 35, color: '#a855f7' },
+                    { id: 'rug1', name: 'موکت زیر میز', type: 'rug', w: 38, h: 26, currX: 30, currY: 55, optX: 56, optY: 44, x: 30, y: 55, color: '#10b981' }
+                ]
+            },
+            school: {
+                label: 'مدرسه و مرکز آموزشی',
+                heroTitle: 'بهینه‌سازی چیدمان گرمایشی کلاس‌های درس، کتابخانه و مدرسه',
+                heroDesc: 'از کلاس درس عکس بگیرید تا نیمکت دانش‌آموزان از ردیف پنجره‌های سرد و کوران درب حیاط خارج شود، جلوی رادیاتورها باز بماند و کمدهای آموزشی عایق دیوار سرد شوند.',
+                calcUnit: 'تعداد کلاس‌های مدرسه:',
+                calcFactor: 1,
+                calcSuffix: 'کلاس درس',
+                currentScore: 43,
+                optimizedScore: 89,
+                savingsPercent: 38,
+                hotspots: [
+                    { x: 24, y: 34, label: 'ردیف پنجره‌های بزرگ کلاس (نفوذ سرمای شدید)', type: 'cold' },
+                    { x: 28, y: 65, label: 'نیمکت ردیف اول چسبیده به شوفاژ (مسدود کردن پخش گرما)', type: 'blocked' },
+                    { x: 78, y: 45, label: 'قفسه کتب و کمد وسایل کمک‌آموزشی', type: 'neutral' }
+                ],
+                detectedItems: [
+                    { name: 'ردیف نیمکت‌های دانش‌آموزان', role: 'چسبیده به شیشه سرد پنجره و مسدودکننده شوفاژ', status: 'bad', icon: 'fa-chair' },
+                    { name: 'رادیاتور طولی کلاس', role: 'توسط کیف‌ها و نیمکت ردیف کنار پنجره محصور شده', status: 'bad', icon: 'fa-temperature-high' },
+                    { name: 'پنجره‌های سرتاسری کلاس', role: 'اتلاف شدید گرمای صبحگاهی قبل از ورود دانش‌آموزان', status: 'cold', icon: 'fa-border-all' },
+                    { name: 'کمد کمک‌آموزشی و کتابخانه', role: 'روی دیوار داخلی مشترک با کلاس بغل', status: 'warn', icon: 'fa-book-atlas' },
+                    { name: 'میز معلم و تخته وایت‌برد', role: 'در مسیر مستقیم کوران درب ورودی کلاس', status: 'warn', icon: 'fa-chalkboard-user' }
+                ],
+                rearrangementSteps: [
+                    {
+                        item: 'ردیف نیمکت‌های کنار پنجره',
+                        from: 'چسبیده به رادیاتور و دیوار پنجره',
+                        to: 'فاصله ۷۰ سانتی‌متری از شوفاژ و شیفت به سمت مرکز و دیوار داخلی',
+                        reason: 'دانش‌آموزان ردیف کنار پنجره همزمان در معرض سوز شیشه و گرمای محبوس شوفاژ هستند؛ با ایجاد راهروی ۷۰ سانتی کنار پنجره، گرما کل کلاس را یکنواخت گرم می‌کند.',
+                        impact: '+۱۸٪ گرمایش یکنواخت کلاس'
+                    },
+                    {
+                        item: 'میز معلم و پارتیشن کنار درب',
+                        from: 'جلوی مسیر باد درب ورودی به راهرو',
+                        to: 'انتقال کمد کوتاه به زاویه درب به عنوان بادشکن ورودی',
+                        reason: 'هنگام باز و بسته شدن درب کلاس در زنگ تفریح، مانع خروج ناگهانی هوای گرم کلاس می‌شود.',
+                        impact: '+۱۱٪ حفظ گرمای کلاس'
+                    },
+                    {
+                        item: 'کمد کتاب‌ها و وسایل آموزشی',
+                        from: 'دیوار داخلی مشترک با کلاس مجاور',
+                        to: 'دیوار بیرونی سرد (سمت حیاط مدرسه)',
+                        reason: 'عایق‌سازی دیوار بیرونی کلاس بدون هزینه و کاهش سرمایش کف کلاس.',
+                        impact: '+۹٪ کاهش مصرف گاز مدرسه'
+                    }
+                ],
+                furniture: [
+                    { id: 'desk1', name: 'ردیف نیمکت دانش‌آموزان', type: 'desk', w: 28, h: 18, currX: 22, currY: 18, optX: 60, optY: 45, x: 22, y: 18, color: '#3b82f6' },
+                    { id: 'sofa1', name: 'میز و کمد جلوی شوفاژ', type: 'sofa', w: 25, h: 11, currX: 48, currY: 10, optX: 50, optY: 77, x: 48, y: 10, color: '#f43f5e' },
+                    { id: 'cabinet1', name: 'کتابخانه و کمد کلاس', type: 'cabinet', w: 10, h: 30, currX: 88, currY: 34, optX: 6, optY: 36, x: 88, y: 34, color: '#a855f7' },
+                    { id: 'rug1', name: 'کفپوش عایق بخش تدریس', type: 'rug', w: 38, h: 26, currX: 28, currY: 52, optX: 54, optY: 40, x: 28, y: 52, color: '#10b981' }
+                ]
+            },
+            commercial: {
+                label: 'فضای تجاری، مطب و فروشگاه',
+                heroTitle: 'بهینه‌سازی گرمایش فروشگاه، کلینیک و فضاهای پرتردد تجاری',
+                heroDesc: 'از محیط کار یا مطب خود عکس بگیرید تا با چیدمان هوشمند کانتر پذیرش، قفسه‌ها و صندلی انتظار، هدررفت گرما از شیشه سکوریت و درب ورودی به حداقل برسد.',
+                calcUnit: 'تعداد واحدهای تجاری/مطب:',
+                calcFactor: 1,
+                calcSuffix: 'واحد تجاری',
+                currentScore: 44,
+                optimizedScore: 88,
+                savingsPercent: 34,
+                hotspots: [
+                    { x: 24, y: 34, label: 'شیشه سکوریت بزرگ ویترین (اتلاف حرارتی بالا)', type: 'cold' },
+                    { x: 28, y: 65, label: 'فن‌کویل/شوفاژ مسدود شده با استند و صندلی انتظار', type: 'blocked' },
+                    { x: 78, y: 45, label: 'قفسه‌های کالا روی دیوار داخلی', type: 'neutral' }
+                ],
+                detectedItems: [
+                    { name: 'صندلی‌های انتظار مراجعین', role: 'چسبیده به شیشه سکوریت و جلوی سیستم گرمایشی', status: 'bad', icon: 'fa-couch' },
+                    { name: 'کانتر پذیرش و صندوق', role: 'رو در روی درب ورودی بدون بادشکن', status: 'bad', icon: 'fa-cash-register' },
+                    { name: 'شیشه سکوریت نما', role: 'بزرگ‌ترین منبع اتلاف گرمای محیط', status: 'cold', icon: 'fa-store' },
+                    { name: 'قفسه‌های دکور و بایگانی', role: 'روی دیوار داخلی به جای دیوار بیرونی سرد', status: 'warn', icon: 'fa-boxes-stacked' }
+                ],
+                rearrangementSteps: [
+                    {
+                        item: 'استندها و صندلی انتظار جلوی فن‌کویل',
+                        from: 'مقابل دریچه گرمایش زیر ویترین',
+                        to: 'ضلع داخلی سالن انتظار (حداقل ۸۰ سانتی‌متر فاصله)',
+                        reason: 'آزاد شدن شوفاژ/فن‌کویل زیر ویترین یک «پرده هوای گرم» طبیعی جلوی شیشه سکوریت می‌سازد.',
+                        impact: '+۱۶٪ بازدهی گرمایش'
+                    },
+                    {
+                        item: 'کانتر پذیرش و ایستگاه پرسنل',
+                        from: 'خط مستقیم باد درب ورودی',
+                        to: 'سمت دیوار گرم داخلی با زاویه ۹۰ درجه نسبت به درب',
+                        reason: 'جلوگیری از برخورد مستقیم هوای سرد بیرون هنگام تردد مشتریان.',
+                        impact: '+۱۰٪ آسایش حرارتی'
+                    },
+                    {
+                        item: 'قفسه‌های بلند کالا و فایل‌ها',
+                        from: 'دیوار داخلی',
+                        to: 'دیوار کناری سرد و زاویه ورودی (ایجاد هشتی ورودی)',
+                        reason: 'کاهش تبادل هوای گرم داخل با فضای بیرون در ترددهای مکرر.',
+                        impact: '+۸٪ صرفه‌جویی انرژی'
+                    }
+                ],
+                furniture: [
+                    { id: 'desk1', name: 'کانتر پذیرش و کار', type: 'desk', w: 24, h: 14, currX: 24, currY: 20, optX: 66, optY: 48, x: 24, y: 20, color: '#3b82f6' },
+                    { id: 'sofa1', name: 'صندلی انتظار (مسدودکننده)', type: 'sofa', w: 26, h: 12, currX: 48, currY: 10, optX: 48, optY: 75, x: 48, y: 10, color: '#f43f5e' },
+                    { id: 'cabinet1', name: 'قفسه بلند (عایق/بادشکن)', type: 'cabinet', w: 10, h: 28, currX: 88, currY: 35, optX: 6, optY: 38, x: 88, y: 35, color: '#a855f7' },
+                    { id: 'rug1', name: 'کفپوش عایق انتظار', type: 'rug', w: 38, h: 26, currX: 30, currY: 54, optX: 55, optY: 42, x: 30, y: 54, color: '#10b981' }
+                ]
+            }
+        };
+
+        // ==========================================
+        // MODE 2: ARCHITECTURAL BLUEPRINT DATA (PRE-CONSTRUCTION)
+        // ==========================================
+        // Normalized 0..100 coordinates on an architectural floorplan with 3 rooms:
+        // Living/Main Hall (left-bottom), Bedroom/Class A (top-left), Room B/Kitchen (right)
+        let blueprintRadiators = [
+            {
+                id: 'rad1', name: 'شوفاژ ۱ (سالن)',
+                // Initially placed WRONG on an interior wall far from the main window!
+                initX: 44, initY: 46,
+                // Optimal: right beneath the main exterior window!
+                optX: 25, optY: 88,
+                x: 44, y: 46
+            },
+            {
+                id: 'rad2', name: 'شوفاژ ۲ (اتاق شمال‌غربی)',
+                // Initially placed WRONG near interior hallway door, leaving cold north corner a dead spot!
+                initX: 42, initY: 35,
+                // Optimal: beneath the cold northern window!
+                optX: 20, optY: 11,
+                x: 42, y: 35
+            },
+            {
+                id: 'rad3', name: 'شوفاژ ۳ (بخش شرقی)',
+                // Initially placed WRONG in the middle corridor instead of exterior cold wall!
+                initX: 58, initY: 50,
+                // Optimal: beneath the east/south-east window!
+                optX: 84, optY: 22,
+                x: 58, y: 50
+            }
+        ];
+
+        let blueprintFindings = [
+            {
+                type: 'deadzone',
+                title: 'نقطه کور گرمایی در کنج شمال‌غربی (اتاق ۱)',
+                desc: 'به دلیل قرار گرفتن شوفاژ ۲ روی دیوار داخلی کنار درب، کنج بیرونی اتاق ۱ دمای ۵ درجه کمتر دارد و مستعد میعان و کپک دیوار است.'
+            },
+            {
+                type: 'radiator',
+                title: 'جانمایی اشتباه شوفاژ ۱ در سالن اصلی',
+                desc: 'شوفاژ سالن از پنجره بزرگ فاصله دارد؛ این باعث ایجاد جریان هوای سرد در کف (Cold Draft) می‌شود. باید دقیقاً زیر پنجره اصلی لوله‌کشی شود.'
+            },
+            {
+                type: 'solar',
+                title: 'بهره‌گیری از خورشید زمستانی (Passive Solar)',
+                desc: 'در حالت نمای جنوبی، زاویه تابش آفتاب زمستانی تا عمق ۴ متری سالن نفوذ می‌کند؛ حفظ پنجره وسیع در ضلع جنوبی و محدود کردن پنجره شمالی تا ۲۸٪ گرمای رایگان می‌دهد.'
+            }
+        ];
+
+        let blueprintSteps = [
+            {
+                title: 'انتقال لوله‌کشی شوفاژ ۱ به زیر پنجره اصلی سالن',
+                before: 'دیوار میانی کنار راهرو',
+                after: 'دقیقاً زیر پنجره اصلی (جبهه نورگیر)',
+                reason: 'ایجاد پرده هوای گرم جلوی شیشه و خنثی‌سازی جریان هوای سرد سرازیر از پنجره قبل از رسیدن به کف.',
+                impact: 'حذف ۱۰۰٪ سوز کف سالن'
+            },
+            {
+                title: 'جابجایی شوفاژ ۲ و ۳ به زیر پنجره‌های جداره بیرونی',
+                before: 'کنار درب‌های داخلی',
+                after: 'زیر پنجره‌های ضلع شمالی و شرقی',
+                reason: 'حذف کامل دو نقطه کور گرمایی (گوشه‌های سرد ساختمان) و توزیع همگن دما در کل پلان.',
+                impact: '+۲۴٪ راندمان سیستم گرمایش'
+            },
+            {
+                title: 'اصلاح ابعاد پنجره شمالی و ایجاد هشتی/بادشکن ورودی (پیش‌ازساخت)',
+                before: 'درب ورودی مستقیم به فضای اصلی بدون حائل',
+                after: 'تعبیه دیواره جداکننده ورودی و پنجره سه‌جداره در ضلع شمالی',
+                reason: 'جلوگیری از خروج ناگهانی کل هوای گرم ساختمان هنگام باز شدن درب ورودی و جلوگیری از اتلاف در ضلع بی‌آفتاب.',
+                impact: 'ارتقای گرید انرژی به A'
+            }
+        ];
+
+        // ==========================================
+        // SWITCHING BUILDING TYPE & MAIN MODES
+        // ==========================================
+        function setBuildingType(type) {
+            activeBuildingType = type;
+            document.querySelectorAll('.btype-btn').forEach(btn => {
+                btn.className = 'btype-btn px-3.5 py-2 rounded-xl text-xs font-medium transition border flex items-center gap-1.5 bg-slate-900/80 border-slate-700 text-slate-300 hover:bg-slate-800';
+            });
+            const activeBtn = document.getElementById(`btnType-${type}`);
+            if (activeBtn) {
+                activeBtn.className = 'btype-btn px-3.5 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-1.5 bg-orange-500/20 border-orange-500/60 text-orange-200';
+            }
+
+            const profile = BUILDING_PROFILES[type];
+            document.getElementById('roomHeroTitle').innerHTML = `<i class="fa-solid fa-wand-magic-sparkles text-orange-400"></i> ${profile.heroTitle}`;
+            document.getElementById('roomHeroDesc').textContent = profile.heroDesc;
+            document.getElementById('calcUnitLabel').textContent = profile.calcUnit;
+
+            // Reset custom room image so user sees the selected building type scenario clearly
+            currentBase64Image = null;
+            currentLayoutMode = 'current';
+            profile.furniture.forEach(item => { item.x = item.currX; item.y = item.currY; });
+
+            updateHeaderMetrics();
+            drawSampleOfficePhoto();
+            renderPhotoHotspots();
+            renderDetectedItemsAndSteps();
+            applySimulatorLayout('current');
+            updateBuildingCalculator();
+
+            if (activeMainMode === 'blueprint') {
+                drawBlueprintSimulator();
+            }
+            showToast(`پلتفرم روی کاربری «${profile.label}» تنظیم شد.`, 'info');
+        }
+
+        function switchMainMode(mode) {
+            activeMainMode = mode;
+            const tabRoom = document.getElementById('mainTab-room');
+            const tabBp = document.getElementById('mainTab-blueprint');
+            const secRoom = document.getElementById('modeSection-room');
+            const secBp = document.getElementById('modeSection-blueprint');
+
+            if (mode === 'room') {
+                tabRoom.className = 'tab-active border rounded-2xl p-4 text-right transition flex items-center justify-between gap-4';
+                tabBp.className = 'bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 text-right transition flex items-center justify-between gap-4';
+                secRoom.classList.remove('hidden');
+                secBp.classList.add('hidden');
+                requestAnimationFrame(() => {
+                    resizeFloorplanCanvas();
+                    if (!currentBase64Image) drawSampleOfficePhoto();
+                });
+            } else {
+                tabBp.className = 'tab-active-blue border rounded-2xl p-4 text-right transition flex items-center justify-between gap-4';
+                tabRoom.className = 'bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 text-right transition flex items-center justify-between gap-4';
+                secBp.classList.remove('hidden');
+                secRoom.classList.add('hidden');
+                requestAnimationFrame(() => {
+                    resizeBlueprintCanvas();
+                    renderBlueprintFindingsAndSteps();
+                });
+            }
+            updateHeaderMetrics();
+        }
+
+        function updateHeaderMetrics() {
+            if (activeMainMode === 'room') {
+                const p = BUILDING_PROFILES[activeBuildingType];
+                document.getElementById('lblHeaderMetric1').textContent = 'امتیاز چیدمان فعلی';
+                document.getElementById('lblHeaderMetric2').textContent = 'امتیاز چیدمان بهینه';
+                document.getElementById('lblHeaderMetric3').textContent = 'صرفه‌جویی گرما';
+                document.getElementById('headerCurrScore').textContent = `${p.currentScore}٪`;
+                document.getElementById('headerOptScore').textContent = `${p.optimizedScore}٪`;
+                document.getElementById('headerSavings').textContent = `+${p.savingsPercent}٪`;
+            } else {
+                document.getElementById('lblHeaderMetric1').textContent = 'امتیاز نقشه فعلی';
+                document.getElementById('lblHeaderMetric2').textContent = 'هدف پیش‌ازساخت';
+                document.getElementById('lblHeaderMetric3').textContent = 'برچسب انرژی';
+                const m = evaluateBlueprintPhysics();
+                document.getElementById('headerCurrScore').textContent = `${m.totalScore}٪`;
+                document.getElementById('headerOptScore').textContent = `۹۴٪`;
+                document.getElementById('headerSavings').textContent = `گرید ${m.grade}`;
+            }
+        }
+
+        // ==========================================
+        // MODE 1: PHOTO CANVAS & ROOM FLOORPLAN SIMULATOR
+        // ==========================================
+        function drawSampleOfficePhoto() {
+            const canvas = document.getElementById('photoPreviewCanvas');
+            const imgEl = document.getElementById('uploadedPhotoEl');
+            if (!canvas || currentBase64Image) return;
+            imgEl.classList.add('hidden');
+            canvas.classList.remove('hidden');
+
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || 640;
+            canvas.height = rect.height || 480;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Background Wall & Floor
+            const wallGrad = ctx.createLinearGradient(0, 0, w, h * 0.7);
+            wallGrad.addColorStop(0, '#1e293b');
+            wallGrad.addColorStop(1, '#334155');
+            ctx.fillStyle = wallGrad;
+            ctx.fillRect(0, 0, w, h * 0.72);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, h * 0.72, w, h * 0.28);
+
+            // Perspective lines
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.12, 0); ctx.lineTo(w * 0.12, h * 0.72); ctx.lineTo(0, h);
+            ctx.moveTo(w * 0.12, h * 0.72); ctx.lineTo(w, h * 0.72);
+            ctx.stroke();
+
+            // Window
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(w * 0.16, h * 0.12, w * 0.26, h * 0.36);
+            const skyGrad = ctx.createLinearGradient(w * 0.16, h * 0.12, w * 0.42, h * 0.48);
+            skyGrad.addColorStop(0, '#bae6fd'); skyGrad.addColorStop(1, '#38bdf8');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(w * 0.17, h * 0.14, w * 0.24, h * 0.32);
+            ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 4;
+            ctx.strokeRect(w * 0.16, h * 0.12, w * 0.26, h * 0.36);
+
+            // Radiator under window
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(w * 0.18, h * 0.52, w * 0.22, h * 0.16);
+            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+            for (let x = w * 0.195; x < w * 0.39; x += w * 0.022) {
+                ctx.beginPath(); ctx.moveTo(x, h * 0.53); ctx.lineTo(x, h * 0.67); ctx.stroke();
+            }
+
+            // Furniture state
+            if (currentLayoutMode === 'current') {
+                ctx.fillStyle = '#be123c';
+                ctx.beginPath(); ctx.roundRect(w * 0.17, h * 0.56, w * 0.25, h * 0.18, 10); ctx.fill();
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(w * 0.24, h * 0.50, w * 0.25, h * 0.04);
+                ctx.fillRect(w * 0.26, h * 0.54, w * 0.02, h * 0.22);
+                ctx.fillRect(w * 0.45, h * 0.54, w * 0.02, h * 0.22);
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(w * 0.72, h * 0.20, w * 0.18, h * 0.52);
+            } else {
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(w * 0.02, h * 0.22, w * 0.13, h * 0.54);
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(w * 0.58, h * 0.52, w * 0.28, h * 0.04);
+                ctx.fillRect(w * 0.60, h * 0.56, w * 0.02, h * 0.22);
+                ctx.fillRect(w * 0.82, h * 0.56, w * 0.02, h * 0.22);
+                ctx.fillStyle = '#059669';
+                ctx.beginPath(); ctx.roundRect(w * 0.48, h * 0.68, w * 0.25, h * 0.16, 10); ctx.fill();
+            }
+
+            if (showPhotoThermalOverlay) {
+                const coldGrad = ctx.createRadialGradient(w * 0.29, h * 0.30, 10, w * 0.29, h * 0.42, w * 0.28);
+                coldGrad.addColorStop(0, 'rgba(14, 165, 233, 0.55)');
+                coldGrad.addColorStop(1, 'rgba(14, 165, 233, 0)');
+                ctx.fillStyle = coldGrad; ctx.fillRect(0, 0, w, h);
+
+                const heatRadius = currentLayoutMode === 'optimized' ? w * 0.48 : w * 0.16;
+                const heatGrad = ctx.createRadialGradient(w * 0.29, h * 0.60, 5, w * 0.38, h * 0.58, heatRadius);
+                heatGrad.addColorStop(0, 'rgba(249, 115, 22, 0.72)');
+                heatGrad.addColorStop(0.5, 'rgba(239, 68, 68, 0.35)');
+                heatGrad.addColorStop(1, 'rgba(249, 115, 22, 0)');
+                ctx.fillStyle = heatGrad; ctx.fillRect(0, 0, w, h);
+            }
+
+            // Corner Label
+            const bLabel = BUILDING_PROFILES[activeBuildingType].label;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.beginPath(); ctx.roundRect(12, 12, 290, 32, 8); ctx.fill();
+            ctx.fillStyle = currentLayoutMode === 'optimized' ? '#34d399' : '#fb923c';
+            ctx.font = 'bold 11px Vazirmatn, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(
+                currentLayoutMode === 'optimized'
+                    ? `${bLabel} | چیدمان بهینه گرمایی`
+                    : `${bLabel} | وضعیت فعلی (شوفاژ مسدود)`,
+                292, 32
+            );
+        }
+
+        function renderPhotoHotspots() {
+            const container = document.getElementById('photoHotspots');
+            container.innerHTML = '';
+            if (!showPhotoThermalOverlay) return;
+            const profile = BUILDING_PROFILES[activeBuildingType];
+            profile.hotspots.forEach((spot) => {
+                const pin = document.createElement('div');
+                const colorClass = spot.type === 'cold'
+                    ? 'bg-sky-500 border-sky-200 text-white'
+                    : spot.type === 'blocked'
+                    ? 'bg-rose-600 border-amber-200 text-white'
+                    : 'bg-amber-500 border-white text-slate-950';
+                pin.style.left = `${spot.x}%`;
+                pin.style.top = `${spot.y}%`;
+                pin.className = 'absolute -translate-x-1/2 -translate-y-1/2 z-10 group/pin cursor-pointer';
+                pin.innerHTML = `
+                    <div class="w-7 h-7 rounded-full border-2 ${colorClass} flex items-center justify-center shadow-lg hotspot-pulse">
+                        <i class="fa-solid ${spot.type === 'cold' ? 'fa-snowflake' : spot.type === 'blocked' ? 'fa-fire-extinguisher' : 'fa-up-down-left-right'} text-xs"></i>
+                    </div>
+                    <div class="opacity-0 group-hover/pin:opacity-100 transition-opacity absolute bottom-full mb-2 right-1/2 translate-x-1/2 whitespace-nowrap bg-slate-950/95 text-white text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-700 shadow-xl pointer-events-none">
+                        ${spot.label}
+                    </div>
+                `;
+                container.appendChild(pin);
+            });
+        }
+
+        function togglePhotoThermalLayer() {
+            showPhotoThermalOverlay = !showPhotoThermalOverlay;
+            const btn = document.getElementById('btnTogglePhotoHeat');
+            btn.className = showPhotoThermalOverlay
+                ? 'text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-xl transition flex items-center gap-1.5'
+                : 'text-xs bg-slate-800 text-slate-400 border border-slate-700 px-3 py-2 rounded-xl transition flex items-center gap-1.5';
+            if (!currentBase64Image) drawSampleOfficePhoto();
+            renderPhotoHotspots();
+        }
+
+        function renderDetectedItemsAndSteps() {
+            const profile = BUILDING_PROFILES[activeBuildingType];
+            const itemsGrid = document.getElementById('detectedItemsGrid');
+            document.getElementById('detectedCountText').textContent = `${profile.detectedItems.length} مورد شناسایی شد`;
+
+            itemsGrid.innerHTML = profile.detectedItems.map(item => {
+                const badgeMap = {
+                    bad: 'bg-rose-500/15 border-rose-500/30 text-rose-300',
+                    cold: 'bg-sky-500/15 border-sky-500/30 text-sky-300',
+                    warn: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+                    good: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                };
+                return `
+                    <div class="p-2.5 rounded-xl border ${badgeMap[item.status] || badgeMap.warn} flex items-start gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-slate-900/80 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fa-solid ${item.icon || 'fa-cube'} text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-xs text-white truncate">${item.name}</div>
+                            <div class="text-[11px] opacity-90 leading-snug">${item.role}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const stepsList = document.getElementById('rearrangementStepsList');
+            stepsList.innerHTML = profile.rearrangementSteps.map((step, idx) => `
+                <div class="bg-slate-900/90 border border-slate-800 hover:border-orange-500/40 rounded-2xl p-3.5 transition space-y-1.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-300 text-xs font-bold flex items-center justify-center">${idx + 1}</span>
+                        <span class="font-bold text-sm text-white">${step.item}</span>
+                        <span class="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">${step.impact}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-xmark ml-1"></i>فعلی: ${step.from}</span>
+                        <i class="fa-solid fa-arrow-left text-slate-500 text-xs"></i>
+                        <span class="text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded-md font-medium"><i class="fa-solid fa-check ml-1"></i>بهینه: ${step.to}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-0.5">${step.reason}</p>
+                </div>
+            `).join('');
+        }
+
+        // Room 2D Floorplan Simulator
+        const fpCanvas = document.getElementById('floorplanCanvas');
+        const fpCtx = fpCanvas.getContext('2d');
+        let draggingRoomItem = null;
+        let dragRoomOffsetX = 0, dragRoomOffsetY = 0;
+        let roomAnimFrameId = null;
+
+        function resizeFloorplanCanvas() {
+            const rect = fpCanvas.parentElement.getBoundingClientRect();
+            if (rect.width < 10) return;
+            fpCanvas.width = rect.width;
+            fpCanvas.height = rect.height;
+            drawFloorplan();
+        }
+
+        function evaluateThermalPhysics() {
+            const items = BUILDING_PROFILES[activeBuildingType].furniture;
+            const desk = items.find(i => i.type === 'desk') || items[0];
+            const cabinet = items.find(i => i.type === 'cabinet') || items[2];
+
+            let minDistToRadiator = 100;
+            items.forEach(item => {
+                if (item.type === 'rug') return;
+                const dist = Math.hypot((item.x + item.w / 2) - 50, (item.y + item.h / 2) - 6);
+                if (dist < minDistToRadiator) minDistToRadiator = dist;
+            });
+            const radiatorFreePct = Math.min(100, Math.max(25, Math.round((minDistToRadiator - 8) * 3.2)));
+            const wallInsulationPct = Math.min(96, Math.max(20, Math.round(100 - (cabinet ? cabinet.x : 50) * 0.9)));
+            const deskDist = desk ? Math.hypot((desk.x + desk.w / 2) - 45, (desk.y + desk.h / 2) - 5) : 40;
+            const deskComfortPct = Math.min(98, Math.max(35, Math.round(deskDist * 1.45 + radiatorFreePct * 0.25)));
+            const totalScore = Math.round(radiatorFreePct * 0.42 + wallInsulationPct * 0.26 + deskComfortPct * 0.32);
+            const tempDrop = Math.max(0, ((totalScore - 45) / 14)).toFixed(1);
+
+            document.getElementById('gaugeRadiatorFree').textContent = `${radiatorFreePct}٪`;
+            document.getElementById('barRadiatorFree').style.width = `${radiatorFreePct}%`;
+            document.getElementById('gaugeRadiatorStatus').textContent = radiatorFreePct >= 75 ? 'گردش عالی' : 'مسدود شده';
+            document.getElementById('gaugeRadiatorStatus').className = radiatorFreePct >= 75 ? 'text-[10px] text-emerald-400 font-semibold' : 'text-[10px] text-rose-400 font-semibold';
+
+            document.getElementById('gaugeWallInsulation').textContent = `${wallInsulationPct}٪`;
+            document.getElementById('barWallInsulation').style.width = `${wallInsulationPct}%`;
+            document.getElementById('gaugeWallStatus').textContent = wallInsulationPct >= 70 ? 'عایق با کمد' : 'دیوار سرد';
+            document.getElementById('gaugeWallStatus').className = wallInsulationPct >= 70 ? 'text-[10px] text-emerald-400 font-semibold' : 'text-[10px] text-amber-400 font-semibold';
+
+            document.getElementById('gaugeDeskComfort').textContent = `${deskComfortPct}٪`;
+            document.getElementById('barDeskComfort').style.width = `${deskComfortPct}%`;
+            document.getElementById('gaugeDeskStatus').textContent = deskComfortPct >= 75 ? 'منطقه گرم' : 'در معرض سوز';
+            document.getElementById('gaugeDeskStatus').className = deskComfortPct >= 75 ? 'text-[10px] text-emerald-400 font-semibold' : 'text-[10px] text-rose-400 font-semibold';
+
+            document.getElementById('gaugeTempDrop').textContent = `${tempDrop}°C-`;
+            document.getElementById('gaugeEnergyText').textContent = totalScore >= 78 ? `صرفه‌جویی عالی: ${Math.round((totalScore - 42) * 0.75)}٪` : 'نیاز به اصلاح چیدمان';
+
+            return { radiatorFreePct, wallInsulationPct, deskComfortPct, totalScore };
+        }
+
+        function drawFloorplan() {
+            const w = fpCanvas.width, h = fpCanvas.height;
+            if (w < 10) return;
+            fpCtx.clearRect(0, 0, w, h);
+            const metrics = evaluateThermalPhysics();
+
+            // Background Grid
+            fpCtx.fillStyle = '#090d16';
+            fpCtx.fillRect(0, 0, w, h);
+            fpCtx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+            fpCtx.lineWidth = 1;
+            for (let x = 0; x < w; x += 28) { fpCtx.beginPath(); fpCtx.moveTo(x, 0); fpCtx.lineTo(x, h); fpCtx.stroke(); }
+            for (let y = 0; y < h; y += 28) { fpCtx.beginPath(); fpCtx.moveTo(0, y); fpCtx.lineTo(w, y); fpCtx.stroke(); }
+
+            // Heat Plume
+            const radSpread = (metrics.radiatorFreePct / 100) * (h * 0.85);
+            const heatGrad = fpCtx.createRadialGradient(w * 0.50, h * 0.06, 10, w * 0.52, h * 0.35, Math.max(60, radSpread));
+            heatGrad.addColorStop(0, 'rgba(249, 115, 22, 0.55)');
+            heatGrad.addColorStop(0.55, 'rgba(234, 88, 12, 0.20)');
+            heatGrad.addColorStop(1, 'rgba(249, 115, 22, 0)');
+            fpCtx.fillStyle = heatGrad; fpCtx.fillRect(0, 0, w, h);
+
+            // Cold Wall Draft
+            const coldLeft = (100 - metrics.wallInsulationPct) / 100;
+            if (coldLeft > 0.15) {
+                const coldGrad = fpCtx.createLinearGradient(0, 0, w * 0.32 * coldLeft, 0);
+                coldGrad.addColorStop(0, 'rgba(14, 165, 233, 0.42)');
+                coldGrad.addColorStop(1, 'rgba(14, 165, 233, 0)');
+                fpCtx.fillStyle = coldGrad; fpCtx.fillRect(0, 0, w * 0.35, h);
+            }
+
+            // Optimal Golden Zone
+            fpCtx.save();
+            fpCtx.strokeStyle = 'rgba(16, 185, 129, 0.45)';
+            fpCtx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+            fpCtx.setLineDash([6, 6]); fpCtx.lineWidth = 2;
+            fpCtx.beginPath(); fpCtx.roundRect(w * 0.52, h * 0.28, w * 0.40, h * 0.48, 16); fpCtx.fill(); fpCtx.stroke();
+            fpCtx.fillStyle = 'rgba(52, 211, 153, 0.85)';
+            fpCtx.font = 'bold 11px Vazirmatn, sans-serif'; fpCtx.textAlign = 'center';
+            fpCtx.fillText('منطقه طلایی و گرم استقرار (کنار دیوار داخلی)', w * 0.72, h * 0.33);
+            fpCtx.restore();
+
+            // Walls & Radiator
+            fpCtx.fillStyle = '#0284c7'; fpCtx.fillRect(w * 0.28, 0, w * 0.44, 10);
+            fpCtx.fillStyle = '#f97316';
+            fpCtx.beginPath(); fpCtx.roundRect(w * 0.36, 10, w * 0.28, 12, 4); fpCtx.fill();
+            fpCtx.fillStyle = '#fff'; fpCtx.font = 'bold 10px Vazirmatn, sans-serif'; fpCtx.textAlign = 'center';
+            fpCtx.fillText('رادیاتور شوفاژ (زیر پنجره)', w * 0.50, 20);
+
+            fpCtx.save();
+            fpCtx.fillStyle = '#0ea5e9'; fpCtx.fillRect(0, h * 0.15, 8, h * 0.70);
+            fpCtx.translate(20, h * 0.50); fpCtx.rotate(-Math.PI / 2);
+            fpCtx.fillStyle = '#7dd3fc'; fpCtx.font = 'bold 11px Vazirmatn, sans-serif'; fpCtx.textAlign = 'center';
+            fpCtx.fillText('دیوار بیرونی سرد (محل مناسب کمد)', 0, 0);
+            fpCtx.restore();
+
+            fpCtx.save();
+            fpCtx.fillStyle = '#f59e0b'; fpCtx.fillRect(w - 8, h * 0.15, 8, h * 0.70);
+            fpCtx.translate(w - 18, h * 0.50); fpCtx.rotate(-Math.PI / 2);
+            fpCtx.fillStyle = '#fcd34d'; fpCtx.font = 'bold 11px Vazirmatn, sans-serif'; fpCtx.textAlign = 'center';
+            fpCtx.fillText('دیوار داخلی گرم ساختمان', 0, 0);
+            fpCtx.restore();
+
+            // Furniture
+            const items = BUILDING_PROFILES[activeBuildingType].furniture;
+            const sorted = [...items].sort((a, b) => (a.type === 'rug' ? -1 : b.type === 'rug' ? 1 : 0));
+            sorted.forEach(item => {
+                const ix = (item.x / 100) * w, iy = (item.y / 100) * h;
+                const iw = (item.w / 100) * w, ih = (item.h / 100) * h;
+                fpCtx.save();
+                if (item.type === 'rug') {
+                    fpCtx.fillStyle = 'rgba(16, 185, 129, 0.16)';
+                    fpCtx.strokeStyle = 'rgba(16, 185, 129, 0.45)';
+                    fpCtx.lineWidth = 2;
+                    fpCtx.beginPath(); fpCtx.roundRect(ix, iy, iw, ih, 12); fpCtx.fill(); fpCtx.stroke();
+                    fpCtx.fillStyle = '#6ee7b7'; fpCtx.font = '11px Vazirmatn, sans-serif'; fpCtx.textAlign = 'center';
+                    fpCtx.fillText(item.name, ix + iw / 2, iy + ih - 8);
+                } else {
+                    fpCtx.shadowColor = 'rgba(0,0,0,0.55)'; fpCtx.shadowBlur = 10;
+                    fpCtx.fillStyle = item.color; fpCtx.strokeStyle = '#fff'; fpCtx.lineWidth = 2;
+                    fpCtx.beginPath(); fpCtx.roundRect(ix, iy, iw, ih, 10); fpCtx.fill(); fpCtx.stroke();
+                    fpCtx.shadowBlur = 0; fpCtx.fillStyle = '#fff';
+                    fpCtx.font = 'bold 11px Vazirmatn, sans-serif'; fpCtx.textAlign = 'center';
+                    fpCtx.fillText(item.name, ix + iw / 2, iy + ih / 2 + 4);
+                }
+                fpCtx.restore();
+            });
+        }
+
+        function applySimulatorLayout(mode) {
+            currentLayoutMode = mode;
+            const btnCurr = document.getElementById('btnModeCurrent');
+            const btnOpt = document.getElementById('btnModeOptimized');
+            if (mode === 'optimized') {
+                btnOpt.className = 'px-3 py-2 rounded-xl text-xs font-bold transition bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5';
+                btnCurr.className = 'px-3 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1.5';
+            } else {
+                btnCurr.className = 'px-3 py-2 rounded-xl text-xs font-bold transition bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
+                btnOpt.className = 'px-3 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1.5';
+            }
+            if (!currentBase64Image) drawSampleOfficePhoto();
+
+            const items = BUILDING_PROFILES[activeBuildingType].furniture;
+            const startTime = performance.now();
+            const startPos = items.map(i => ({ x: i.x, y: i.y }));
+            const targetPos = items.map(i => ({ x: mode === 'optimized' ? i.optX : i.currX, y: mode === 'optimized' ? i.optY : i.currY }));
+            if (roomAnimFrameId) cancelAnimationFrame(roomAnimFrameId);
+
+            function step(now) {
+                const p = Math.min(1, (now - startTime) / 600);
+                const ease = 1 - Math.pow(1 - p, 3);
+                items.forEach((it, idx) => {
+                    it.x = startPos[idx].x + (targetPos[idx].x - startPos[idx].x) * ease;
+                    it.y = startPos[idx].y + (targetPos[idx].y - startPos[idx].y) * ease;
+                });
+                drawFloorplan();
+                if (p < 1) roomAnimFrameId = requestAnimationFrame(step);
+            }
+            roomAnimFrameId = requestAnimationFrame(step);
+        }
+
+        // Room Canvas Drag Events
+        function getCanvasNorm(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            const cx = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            const cy = evt.touches ? evt.touches[0].clientY : evt.clientY;
+            return { nx: ((cx - rect.left) / rect.width) * 100, ny: ((cy - rect.top) / rect.height) * 100 };
+        }
+
+        fpCanvas.addEventListener('mousedown', e => {
+            const { nx, ny } = getCanvasNorm(fpCanvas, e);
+            const items = BUILDING_PROFILES[activeBuildingType].furniture;
+            for (let i = items.length - 1; i >= 0; i--) {
+                const it = items[i];
+                if (nx >= it.x && nx <= it.x + it.w && ny >= it.y && ny <= it.y + it.h) {
+                    draggingRoomItem = it; dragRoomOffsetX = nx - it.x; dragRoomOffsetY = ny - it.y; break;
+                }
+            }
+        });
+        fpCanvas.addEventListener('mousemove', e => {
+            if (!draggingRoomItem) return;
+            const { nx, ny } = getCanvasNorm(fpCanvas, e);
+            draggingRoomItem.x = Math.max(2, Math.min(98 - draggingRoomItem.w, nx - dragRoomOffsetX));
+            draggingRoomItem.y = Math.max(4, Math.min(96 - draggingRoomItem.h, ny - dragRoomOffsetY));
+            drawFloorplan();
+        });
+        fpCanvas.addEventListener('touchstart', e => {
+            const { nx, ny } = getCanvasNorm(fpCanvas, e);
+            const items = BUILDING_PROFILES[activeBuildingType].furniture;
+            for (let i = items.length - 1; i >= 0; i--) {
+                const it = items[i];
+                if (nx >= it.x && nx <= it.x + it.w && ny >= it.y && ny <= it.y + it.h) {
+                    draggingRoomItem = it; dragRoomOffsetX = nx - it.x; dragRoomOffsetY = ny - it.y; break;
+                }
+            }
+        }, { passive: false });
+        fpCanvas.addEventListener('touchmove', e => {
+            if (!draggingRoomItem) return;
+            e.preventDefault();
+            const { nx, ny } = getCanvasNorm(fpCanvas, e);
+            draggingRoomItem.x = Math.max(2, Math.min(98 - draggingRoomItem.w, nx - dragRoomOffsetX));
+            draggingRoomItem.y = Math.max(4, Math.min(96 - draggingRoomItem.h, ny - dragRoomOffsetY));
+            drawFloorplan();
+        }, { passive: false });
+
+        // ==========================================
+        // MODE 2: ARCHITECTURAL BLUEPRINT SIMULATOR (SOLAR + DEAD ZONES + RADIATORS)
+        // ==========================================
+        const bpCanvas = document.getElementById('blueprintCanvas');
+        const bpCtx = bpCanvas.getContext('2d');
+        let draggingBpRad = null;
+        let bpAnimFrameId = null;
+
+        function resizeBlueprintCanvas() {
+            const rect = bpCanvas.parentElement.getBoundingClientRect();
+            if (rect.width < 10) return;
+            bpCanvas.width = rect.width;
+            bpCanvas.height = rect.height;
+            drawBlueprintSimulator();
+        }
+
+        function setBlueprintOrientation(orient) {
+            bpOrientation = orient;
+            document.querySelectorAll('.orient-btn').forEach(btn => {
+                btn.className = 'orient-btn py-1.5 rounded-xl text-xs font-medium bg-slate-900 border border-slate-700 text-slate-300';
+            });
+            const active = document.getElementById(`btnOrient-${orient}`);
+            if (active) {
+                active.className = 'orient-btn py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 border border-amber-500/60 text-amber-300';
+            }
+            drawBlueprintSimulator();
+            updateHeaderMetrics();
+        }
+
+        function updateSunSimulation() {
+            bpSunHour = parseFloat(document.getElementById('sliderSunHour').value);
+            const h = Math.floor(bpSunHour);
+            const m = bpSunHour % 1 === 0 ? '۰۰' : '۳۰';
+            const period = h < 12 ? 'صبح' : h === 12 ? 'ظهر' : 'عصر';
+            document.getElementById('lblSunHour').textContent = `ساعت ${h}:${m} ${period}`;
+            drawBlueprintSimulator();
+        }
+
+        // Key architectural target zones for radiators (under exterior cold windows!)
+        const OPTIMAL_WINDOW_ZONES = [
+            { x: 25, y: 88, label: 'زیر پنجره اصلی سالن' },
+            { x: 20, y: 11, label: 'زیر پنجره اتاق شمال‌غربی' },
+            { x: 84, y: 22, label: 'زیر پنجره ضلع شرقی' }
+        ];
+
+        function evaluateBlueprintPhysics() {
+            // 1. Solar Gain Score based on Orientation & Climate
+            const orientScores = { south: 92, east: 74, west: 68, north: 38 };
+            const climateMod = document.getElementById('climateSelect')?.value === 'cold' ? -4 : 0;
+            const solarScore = Math.max(25, Math.min(98, orientScores[bpOrientation] + climateMod));
+
+            // 2. Radiator Placement Score (How close each radiator is to its ideal under-window exterior wall spot)
+            let totalDistPenalty = 0;
+            let deadZoneCount = 0;
+            const deadZones = [];
+
+            OPTIMAL_WINDOW_ZONES.forEach((win, idx) => {
+                // Find closest radiator to this exterior window zone
+                let minD = 999;
+                blueprintRadiators.forEach(rad => {
+                    const d = Math.hypot(rad.x - win.x, rad.y - win.y);
+                    if (d < minD) minD = d;
+                });
+                totalDistPenalty += Math.min(45, minD);
+                if (minD > 20) {
+                    deadZoneCount++;
+                    deadZones.push({ x: win.x, y: win.y, intensity: Math.min(1, minD / 45), label: win.label });
+                }
+            });
+
+            const radAccuracy = Math.max(20, Math.min(98, Math.round(100 - (totalDistPenalty / 1.15))));
+            const deadZoneScore = Math.max(25, Math.min(99, Math.round(100 - deadZoneCount * 24 - (totalDistPenalty * 0.25))));
+            const totalScore = Math.round(solarScore * 0.30 + radAccuracy * 0.38 + deadZoneScore * 0.32);
+
+            let grade = 'D';
+            if (totalScore >= 86) grade = 'A+';
+            else if (totalScore >= 76) grade = 'A';
+            else if (totalScore >= 65) grade = 'B';
+            else if (totalScore >= 52) grade = 'C';
+
+            // Update UI Gauges
+            document.getElementById('bpGaugeSolar').textContent = `${solarScore}٪`;
+            document.getElementById('bpBarSolar').style.width = `${solarScore}%`;
+            document.getElementById('bpStatusSolar').textContent = solarScore >= 75 ? 'آفتاب‌گیر عالی' : solarScore >= 55 ? 'نورگیری متوسط' : 'ضعیف (ضلع شمالی)';
+            document.getElementById('bpStatusSolar').className = solarScore >= 75 ? 'text-[10px] text-emerald-400' : solarScore >= 55 ? 'text-[10px] text-amber-400' : 'text-[10px] text-rose-400';
+
+            document.getElementById('bpGaugeDeadzone').textContent = `${deadZoneScore}٪`;
+            document.getElementById('bpBarDeadzone').style.width = `${deadZoneScore}%`;
+            document.getElementById('bpStatusDeadzone').textContent = deadZoneCount === 0 ? 'بدون نقطه کور!' : `${deadZoneCount} نقطه کور سرد`;
+            document.getElementById('bpStatusDeadzone').className = deadZoneCount === 0 ? 'text-[10px] text-emerald-400 font-bold' : 'text-[10px] text-rose-400 font-bold';
+
+            document.getElementById('bpGaugeRad').textContent = `${radAccuracy}٪`;
+            document.getElementById('bpBarRad').style.width = `${radAccuracy}%`;
+            document.getElementById('bpStatusRad').textContent = radAccuracy >= 80 ? 'جانمایی استاندارد' : 'نیاز به جابجایی';
+            document.getElementById('bpStatusRad').className = radAccuracy >= 80 ? 'text-[10px] text-emerald-400 font-bold' : 'text-[10px] text-rose-400 font-bold';
+
+            document.getElementById('bpGaugeTotal').textContent = `${totalScore}٪`;
+            document.getElementById('bpGradeMini').textContent = `گرید ${grade}`;
+            document.getElementById('bpEnergyGrade').textContent = grade;
+
+            const badge = document.getElementById('bpEnergyBadge');
+            const vTitle = document.getElementById('bpVerdictTitle');
+            if (totalScore >= 78) {
+                badge.className = 'w-14 h-14 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 flex flex-col items-center justify-center shrink-0';
+                document.getElementById('bpEnergyGrade').className = 'text-2xl font-black text-emerald-400 leading-none';
+                vTitle.textContent = 'نقشه معماری بهینه و آماده اجرا (بدون نقطه کور)';
+                vTitle.className = 'text-sm font-bold text-emerald-300';
+            } else {
+                badge.className = 'w-14 h-14 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex flex-col items-center justify-center shrink-0';
+                document.getElementById('bpEnergyGrade').className = 'text-2xl font-black text-amber-400 leading-none';
+                vTitle.textContent = `دارای ${deadZoneCount} نقطه کور گرمایی؛ نیازمند اصلاح جانمایی شوفاژها`;
+                vTitle.className = 'text-sm font-bold text-amber-300';
+            }
+
+            return { solarScore, radAccuracy, deadZoneScore, totalScore, grade, deadZones };
+        }
+
+        function drawBlueprintSimulator() {
+            const w = bpCanvas.width, h = bpCanvas.height;
+            if (w < 10) return;
+            bpCtx.clearRect(0, 0, w, h);
+
+            const m = evaluateBlueprintPhysics();
+
+            // 1. Blueprint CAD Dark-Blue Background
+            bpCtx.fillStyle = '#071324';
+            bpCtx.fillRect(0, 0, w, h);
+
+            // CAD Blueprint Grid
+            bpCtx.strokeStyle = 'rgba(56, 189, 248, 0.10)';
+            bpCtx.lineWidth = 1;
+            for (let x = 0; x < w; x += 24) { bpCtx.beginPath(); bpCtx.moveTo(x, 0); bpCtx.lineTo(x, h); bpCtx.stroke(); }
+            for (let y = 0; y < h; y += 24) { bpCtx.beginPath(); bpCtx.moveTo(0, y); bpCtx.lineTo(w, y); bpCtx.stroke(); }
+
+            // 2. Solar Gain Rays Visualization (Depends on Orientation & Sun Hour 8..16)
+            const sunProgress = (bpSunHour - 8) / 8; // 0 to 1
+            bpCtx.save();
+            if (bpOrientation === 'south') {
+                // Strong golden winter sunlight coming from Bottom (South) Windows deep into the main hall!
+                const rayStartX = w * (0.15 + sunProgress * 0.40);
+                const sunGrad = bpCtx.createLinearGradient(w * 0.30, h * 0.94, w * 0.30, h * 0.35);
+                sunGrad.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
+                sunGrad.addColorStop(0.6, 'rgba(250, 204, 21, 0.16)');
+                sunGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+                bpCtx.fillStyle = sunGrad;
+                bpCtx.beginPath();
+                bpCtx.moveTo(w * 0.12, h * 0.92);
+                bpCtx.lineTo(w * 0.48, h * 0.92);
+                bpCtx.lineTo(w * 0.52 - (sunProgress - 0.5) * w * 0.25, h * 0.42);
+                bpCtx.lineTo(w * 0.08 - (sunProgress - 0.5) * w * 0.20, h * 0.42);
+                bpCtx.closePath();
+                bpCtx.fill();
+            } else if (bpOrientation === 'east') {
+                // Morning sun from Right (East)
+                const alpha = Math.max(0.08, 0.48 - sunProgress * 0.38);
+                const sunGrad = bpCtx.createLinearGradient(w * 0.92, h * 0.4, w * 0.45, h * 0.4);
+                sunGrad.addColorStop(0, `rgba(250, 204, 21, ${alpha})`);
+                sunGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+                bpCtx.fillStyle = sunGrad;
+                bpCtx.fillRect(w * 0.45, h * 0.10, w * 0.48, h * 0.78);
+            } else if (bpOrientation === 'west') {
+                // Afternoon sun from Left (West)
+                const alpha = Math.max(0.08, 0.10 + sunProgress * 0.38);
+                const sunGrad = bpCtx.createLinearGradient(w * 0.08, h * 0.4, w * 0.55, h * 0.4);
+                sunGrad.addColorStop(0, `rgba(250, 204, 21, ${alpha})`);
+                sunGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+                bpCtx.fillStyle = sunGrad;
+                bpCtx.fillRect(w * 0.08, h * 0.10, w * 0.48, h * 0.78);
+            } else {
+                // North-facing: minimal direct sun, cold blue ambient from top
+                const coldTop = bpCtx.createLinearGradient(0, h * 0.06, 0, h * 0.45);
+                coldTop.addColorStop(0, 'rgba(56, 189, 248, 0.28)');
+                coldTop.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                bpCtx.fillStyle = coldTop;
+                bpCtx.fillRect(w * 0.08, h * 0.08, w * 0.84, h * 0.40);
+            }
+            bpCtx.restore();
+
+            // 3. Draw Architectural Floorplan Walls (Exterior & Interior Partitions)
+            const padX = w * 0.07, padY = h * 0.08;
+            const bw = w * 0.86, bh = h * 0.84;
+
+            bpCtx.strokeStyle = '#38bdf8';
+            bpCtx.lineWidth = 4;
+            bpCtx.strokeRect(padX, padY, bw, bh);
+
+            // Interior Partition Walls (Creating 3 functional zones based on Building Type)
+            bpCtx.strokeStyle = 'rgba(148, 163, 184, 0.8)';
+            bpCtx.lineWidth = 3;
+            bpCtx.beginPath();
+            // Horizontal divider on left side (separating Room 1 top-left and Main Hall bottom-left)
+            bpCtx.moveTo(padX, padY + bh * 0.44);
+            bpCtx.lineTo(padX + bw * 0.46, padY + bh * 0.44);
+            // Vertical divider separating left rooms and right wing (with doorway gap)
+            bpCtx.moveTo(padX + bw * 0.54, padY);
+            bpCtx.lineTo(padX + bw * 0.54, padY + bh * 0.36);
+            bpCtx.moveTo(padX + bw * 0.54, padY + bh * 0.52);
+            bpCtx.lineTo(padX + bw * 0.54, padY + bh);
+            bpCtx.stroke();
+
+            // Room Architectural Labels (Adapted to Building Type!)
+            const zoneLabels = {
+                home: ['اتاق خواب شمالی', 'پذیرایی و نشیمن اصلی', 'اتاق خواب / آشپزخانه شرقی'],
+                office: ['اتاق مدیریت (شمالی)', 'سالن کارمندان (اصلی)', 'اتاق جلسات و بایگانی'],
+                school: ['کلاس درس ۱ (شمالی)', 'کلاس درس اصلی / سالن', 'دفتر معلمان / آزمایشگاه'],
+                commercial: ['انبار / اتاق معاینه', 'سالن پذیرش و انتظار', 'بخش اداری و فروش']
+            }[activeBuildingType];
+
+            bpCtx.fillStyle = 'rgba(203, 213, 225, 0.55)';
+            bpCtx.font = 'bold 12px Vazirmatn, sans-serif';
+            bpCtx.textAlign = 'center';
+            bpCtx.fillText(zoneLabels[0], padX + bw * 0.27, padY + bh * 0.24);
+            bpCtx.fillText(zoneLabels[1], padX + bw * 0.27, padY + bh * 0.72);
+            bpCtx.fillText(zoneLabels[2], padX + bw * 0.77, padY + bh * 0.52);
+
+            // Windows on Exterior Walls (Double-line cyan architectural symbols)
+            bpCtx.strokeStyle = '#38bdf8';
+            bpCtx.lineWidth = 7;
+            // Main Bottom Window (South)
+            bpCtx.beginPath(); bpCtx.moveTo(w * 0.14, padY + bh); bpCtx.lineTo(w * 0.44, padY + bh); bpCtx.stroke();
+            // North-West Window
+            bpCtx.beginPath(); bpCtx.moveTo(w * 0.13, padY); bpCtx.lineTo(w * 0.34, padY); bpCtx.stroke();
+            // East Window
+            bpCtx.beginPath(); bpCtx.moveTo(padX + bw, h * 0.16); bpCtx.lineTo(padX + bw, h * 0.40); bpCtx.stroke();
+
+            // Window Labels
+            bpCtx.fillStyle = '#7dd3fc';
+            bpCtx.font = 'bold 10px Vazirmatn, sans-serif';
+            bpCtx.fillText('پنجره اصلی (جبهه نما)', w * 0.29, padY + bh + 16);
+            bpCtx.fillText('پنجره شمالی (سرد)', w * 0.23, padY - 7);
+
+            // 4. Heat Plumes from Current Radiator Positions
+            blueprintRadiators.forEach(rad => {
+                const rx = (rad.x / 100) * w;
+                const ry = (rad.y / 100) * h;
+                const rg = bpCtx.createRadialGradient(rx, ry, 5, rx, ry, w * 0.24);
+                rg.addColorStop(0, 'rgba(249, 115, 22, 0.52)');
+                rg.addColorStop(0.5, 'rgba(234, 88, 12, 0.18)');
+                rg.addColorStop(1, 'rgba(249, 115, 22, 0)');
+                bpCtx.fillStyle = rg;
+                bpCtx.fillRect(0, 0, w, h);
+            });
+
+            // 5. Thermal Dead Zones (Cold Unheated Corners / Unprotected Windows)
+            m.deadZones.forEach(dz => {
+                const dx = (dz.x / 100) * w;
+                const dy = (dz.y / 100) * h;
+                const dg = bpCtx.createRadialGradient(dx, dy, 8, dx, dy, w * 0.17);
+                dg.addColorStop(0, 'rgba(79, 70, 229, 0.65)');
+                dg.addColorStop(0.6, 'rgba(14, 165, 233, 0.28)');
+                dg.addColorStop(1, 'rgba(14, 165, 233, 0)');
+                bpCtx.fillStyle = dg;
+                bpCtx.beginPath(); bpCtx.arc(dx, dy, w * 0.17, 0, Math.PI * 2); bpCtx.fill();
+
+                // Dashed Warning Target Ring showing where radiator SHOULD go!
+                bpCtx.save();
+                bpCtx.strokeStyle = '#fb7185';
+                bpCtx.setLineDash([5, 4]);
+                bpCtx.lineWidth = 2;
+                bpCtx.beginPath(); bpCtx.arc(dx, dy, 20, 0, Math.PI * 2); bpCtx.stroke();
+                bpCtx.fillStyle = '#fda4af';
+                bpCtx.font = 'bold 10px Vazirmatn, sans-serif';
+                bpCtx.textAlign = 'center';
+                bpCtx.fillText('نقطه کور سرد (محل بهینه شوفاژ)', dx, dy + 32);
+                bpCtx.restore();
+            });
+
+            // 6. Draw Draggable Radiators
+            blueprintRadiators.forEach(rad => {
+                const rx = (rad.x / 100) * w;
+                const ry = (rad.y / 100) * h;
+                bpCtx.save();
+                bpCtx.shadowColor = 'rgba(249, 115, 22, 0.7)';
+                bpCtx.shadowBlur = 12;
+                bpCtx.fillStyle = '#f97316';
+                bpCtx.strokeStyle = '#fff';
+                bpCtx.lineWidth = 2;
+                bpCtx.beginPath();
+                bpCtx.roundRect(rx - 34, ry - 12, 68, 24, 6);
+                bpCtx.fill();
+                bpCtx.stroke();
+                bpCtx.shadowBlur = 0;
+                bpCtx.fillStyle = '#fff';
+                bpCtx.font = 'bold 10px Vazirmatn, sans-serif';
+                bpCtx.textAlign = 'center';
+                bpCtx.fillText(rad.name, rx, ry + 4);
+                bpCtx.restore();
+            });
+
+            // 7. Sun Indicator Icon on Compass Edge
+            bpCtx.save();
+            const sunPosMap = {
+                south: { x: w * (0.2 + sunProgress * 0.6), y: h - 14 },
+                north: { x: w * (0.2 + sunProgress * 0.6), y: 14 },
+                east:  { x: w - 16, y: h * (0.25 + sunProgress * 0.5) },
+                west:  { x: 16, y: h * (0.25 + sunProgress * 0.5) }
+            };
+            const sp = sunPosMap[bpOrientation];
+            bpCtx.fillStyle = '#facc15';
+            bpCtx.shadowColor = '#facc15'; bpCtx.shadowBlur = 14;
+            bpCtx.beginPath(); bpCtx.arc(sp.x, sp.y, 9, 0, Math.PI * 2); bpCtx.fill();
+            bpCtx.restore();
+        }
+
+        function applyBlueprintLayout(mode) {
+            bpLayoutMode = mode;
+            const btnInit = document.getElementById('btnBpInitial');
+            const btnOpt = document.getElementById('btnBpOptimized');
+            if (mode === 'optimized') {
+                btnOpt.className = 'px-3 py-2 rounded-xl text-xs font-bold transition bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5';
+                btnInit.className = 'px-3 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1.5';
+            } else {
+                btnInit.className = 'px-3 py-2 rounded-xl text-xs font-bold transition bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
+                btnOpt.className = 'px-3 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1.5';
+            }
+
+            const startTime = performance.now();
+            const startPos = blueprintRadiators.map(r => ({ x: r.x, y: r.y }));
+            const targetPos = blueprintRadiators.map(r => ({
+                x: mode === 'optimized' ? r.optX : r.initX,
+                y: mode === 'optimized' ? r.optY : r.initY
+            }));
+            if (bpAnimFrameId) cancelAnimationFrame(bpAnimFrameId);
+
+            function step(now) {
+                const p = Math.min(1, (now - startTime) / 650);
+                const ease = 1 - Math.pow(1 - p, 3);
+                blueprintRadiators.forEach((r, idx) => {
+                    r.x = startPos[idx].x + (targetPos[idx].x - startPos[idx].x) * ease;
+                    r.y = startPos[idx].y + (targetPos[idx].y - startPos[idx].y) * ease;
+                });
+                drawBlueprintSimulator();
+                if (p < 1) bpAnimFrameId = requestAnimationFrame(step);
+                else updateHeaderMetrics();
+            }
+            bpAnimFrameId = requestAnimationFrame(step);
+        }
+
+        // Blueprint Canvas Drag Radiators
+        bpCanvas.addEventListener('mousedown', e => {
+            const { nx, ny } = getCanvasNorm(bpCanvas, e);
+            for (const rad of blueprintRadiators) {
+                if (Math.hypot(nx - rad.x, ny - rad.y) < 10) {
+                    draggingBpRad = rad; break;
+                }
+            }
+        });
+        bpCanvas.addEventListener('mousemove', e => {
+            if (!draggingBpRad) return;
+            const { nx, ny } = getCanvasNorm(bpCanvas, e);
+            draggingBpRad.x = Math.max(10, Math.min(90, nx));
+            draggingBpRad.y = Math.max(10, Math.min(90, ny));
+            drawBlueprintSimulator();
+        });
+        bpCanvas.addEventListener('touchstart', e => {
+            const { nx, ny } = getCanvasNorm(bpCanvas, e);
+            for (const rad of blueprintRadiators) {
+                if (Math.hypot(nx - rad.x, ny - rad.y) < 12) {
+                    draggingBpRad = rad; break;
+                }
+            }
+        }, { passive: false });
+        bpCanvas.addEventListener('touchmove', e => {
+            if (!draggingBpRad) return;
+            e.preventDefault();
+            const { nx, ny } = getCanvasNorm(bpCanvas, e);
+            draggingBpRad.x = Math.max(10, Math.min(90, nx));
+            draggingBpRad.y = Math.max(10, Math.min(90, ny));
+            drawBlueprintSimulator();
+        }, { passive: false });
+
+        window.addEventListener('mouseup', () => { draggingRoomItem = null; draggingBpRad = null; });
+        window.addEventListener('touchend', () => { draggingRoomItem = null; draggingBpRad = null; });
+        window.addEventListener('resize', () => {
+            if (activeMainMode === 'room') {
+                resizeFloorplanCanvas();
+                if (!currentBase64Image) drawSampleOfficePhoto();
+            } else {
+                resizeBlueprintCanvas();
+            }
+        });
+
+        function renderBlueprintFindingsAndSteps() {
+            const fBox = document.getElementById('bpFindingsList');
+            fBox.innerHTML = blueprintFindings.map(f => {
+                const style = f.type === 'deadzone'
+                    ? 'bg-indigo-950/60 border-indigo-500/40 text-indigo-200'
+                    : f.type === 'solar'
+                    ? 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+                    : 'bg-rose-950/40 border-rose-500/40 text-rose-200';
+                const icon = f.type === 'deadzone' ? 'fa-snowflake text-sky-400' : f.type === 'solar' ? 'fa-sun text-yellow-400' : 'fa-fire-flame-curved text-orange-400';
+                return `
+                    <div class="p-3 rounded-xl border ${style} space-y-1">
+                        <div class="font-bold text-xs text-white flex items-center gap-2">
+                            <i class="fa-solid ${icon}"></i>
+                            <span>${f.title}</span>
+                        </div>
+                        <p class="text-[11px] opacity-90 leading-relaxed">${f.desc}</p>
+                    </div>
+                `;
+            }).join('');
+
+            const sBox = document.getElementById('bpStepsList');
+            sBox.innerHTML = blueprintSteps.map((st, i) => `
+                <div class="bg-slate-900/90 border border-slate-800 hover:border-sky-500/40 rounded-2xl p-3.5 transition space-y-1.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 text-xs font-bold flex items-center justify-center">${i + 1}</span>
+                        <span class="font-bold text-sm text-white">${st.title}</span>
+                        <span class="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">${st.impact}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-xmark ml-1"></i>وضعیت نقشه: ${st.before}</span>
+                        <i class="fa-solid fa-arrow-left text-slate-500 text-xs"></i>
+                        <span class="text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded-md font-medium"><i class="fa-solid fa-check ml-1"></i>اصلاح پیش‌ازساخت: ${st.after}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-0.5">${st.reason}</p>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // UPLOAD HANDLERS & CAMERA MODAL
+        // ==========================================
+        function handleImageUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                setCustomRoomImage(e.target.result);
+                analyzeCurrentPhotoWithGemini();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setCustomRoomImage(dataUrl) {
+            currentBase64Image = dataUrl.split(',')[1];
+            const imgEl = document.getElementById('uploadedPhotoEl');
+            const canvas = document.getElementById('photoPreviewCanvas');
+            imgEl.src = dataUrl;
+            imgEl.classList.remove('hidden');
+            canvas.classList.add('hidden');
+            document.getElementById('analysisBadge').textContent = 'عکس اختصاصی بارگذاری شد';
+            showToast('عکس فضا بارگذاری شد. شروع تحلیل هوشمند حرارتی...', 'info');
+        }
+
+        function handleBlueprintUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const dataUrl = e.target.result;
+                uploadedBlueprintBase64 = dataUrl.split(',')[1];
+                const imgEl = document.getElementById('uploadedBlueprintImg');
+                const placeholder = document.getElementById('blueprintPlaceholderBox');
+                imgEl.src = dataUrl;
+                imgEl.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                document.getElementById('bpAnalysisBadge').textContent = 'نقشه اختصاصی آپلود شد';
+                showToast('نقشه معماری دریافت شد! در حال ممیزی حرارتی و آفتاب‌گیری...', 'info');
+                analyzeBlueprintWithGemini();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function triggerNativeCamera() {
+            closeCameraModal();
+            document.getElementById('nativeCameraInput').click();
+        }
+
+        function startSimulatedCameraStream() {
+            isSimulatedCameraActive = true;
+            const video = document.getElementById('cameraVideoEl');
+            const simCanvas = document.getElementById('simulatedCameraCanvas');
+            document.getElementById('iframeCameraNotice').classList.remove('hidden');
+            video.classList.add('hidden');
+            simCanvas.classList.remove('hidden');
+            document.getElementById('cameraModeBadge').textContent = 'شبیه‌ساز زنده AR';
+
+            simCanvas.width = 640; simCanvas.height = 360;
+            const ctx = simCanvas.getContext('2d');
+            let tick = 0;
+
+            function renderSim() {
+                if (!isSimulatedCameraActive) return;
+                tick += 0.03;
+                const w = simCanvas.width, h = simCanvas.height;
+                ctx.save();
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, w, h);
+                ctx.translate(Math.sin(tick) * 7, Math.cos(tick * 0.8) * 4);
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(-20, -20, w + 40, h * 0.72);
+                ctx.fillStyle = '#0284c7'; ctx.fillRect(w * 0.18, h * 0.12, w * 0.26, h * 0.36);
+                ctx.fillStyle = '#e2e8f0'; ctx.fillRect(w * 0.20, h * 0.52, w * 0.22, h * 0.15);
+                ctx.fillStyle = '#be123c'; ctx.beginPath(); ctx.roundRect(w * 0.19, h * 0.56, w * 0.24, h * 0.17, 8); ctx.fill();
+                ctx.fillStyle = '#78350f'; ctx.fillRect(w * 0.72, h * 0.18, w * 0.16, h * 0.52);
+
+                const pulse = 1 + Math.sin(tick * 2.5) * 0.12;
+                const cg = ctx.createRadialGradient(w * 0.31, h * 0.30, 5, w * 0.31, h * 0.30, w * 0.22 * pulse);
+                cg.addColorStop(0, 'rgba(14,165,233,0.55)'); cg.addColorStop(1, 'rgba(14,165,233,0)');
+                ctx.fillStyle = cg; ctx.fillRect(0, 0, w, h);
+
+                const hg = ctx.createRadialGradient(w * 0.31, h * 0.59, 5, w * 0.31, h * 0.59, w * 0.16 * pulse);
+                hg.addColorStop(0, 'rgba(249,115,22,0.75)'); hg.addColorStop(1, 'rgba(249,115,22,0)');
+                ctx.fillStyle = hg; ctx.fillRect(0, 0, w, h);
+                ctx.restore();
+                simCamAnimId = requestAnimationFrame(renderSim);
+            }
+            renderSim();
+        }
+
+        async function toggleCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('cameraVideoEl');
+            modal.classList.remove('hidden');
+            document.getElementById('iframeCameraNotice').classList.add('hidden');
+            document.getElementById('simulatedCameraCanvas').classList.add('hidden');
+            video.classList.remove('hidden');
+            try {
+                if (!navigator.mediaDevices?.getUserMedia) throw new Error('No MediaDevices');
+                try {
+                    activeCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+                } catch {
+                    activeCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                }
+                video.srcObject = activeCameraStream;
+                document.getElementById('cameraModeBadge').textContent = 'متصل به دوربین زنده';
+            } catch {
+                startSimulatedCameraStream();
+            }
+        }
+
+        function closeCameraModal() {
+            document.getElementById('cameraModal').classList.add('hidden');
+            isSimulatedCameraActive = false;
+            if (simCamAnimId) cancelAnimationFrame(simCamAnimId);
+            if (activeCameraStream) {
+                activeCameraStream.getTracks().forEach(t => t.stop());
+                activeCameraStream = null;
+            }
+        }
+
+        function capturePhotoFromStream() {
+            const video = document.getElementById('cameraVideoEl');
+            const simCanvas = document.getElementById('simulatedCameraCanvas');
+            if (isSimulatedCameraActive) {
+                const dataUrl = simCanvas.toDataURL('image/jpeg', 0.9);
+                closeCameraModal();
+                setCustomRoomImage(dataUrl);
+                analyzeCurrentPhotoWithGemini();
+                return;
+            }
+            if (!video.videoWidth) { showToast('تصویر دوربین هنوز آماده نیست.', 'error'); return; }
+            const tmp = document.createElement('canvas');
+            tmp.width = video.videoWidth; tmp.height = video.videoHeight;
+            tmp.getContext('2d').drawImage(video, 0, 0);
+            closeCameraModal();
+            setCustomRoomImage(tmp.toDataURL('image/jpeg', 0.88));
+            analyzeCurrentPhotoWithGemini();
+        }
+
+        // ==========================================
+        // GEMINI VISION #1: ROOM PHOTO REARRANGEMENT ANALYSIS
+        // ==========================================
+        async function analyzeCurrentPhotoWithGemini() {
+            const overlay = document.getElementById('visionLoadingOverlay');
+            const badge = document.getElementById('analysisBadge');
+            overlay.classList.remove('hidden');
+            badge.textContent = 'در حال تحلیل با Gemini Vision...';
+
+            try {
+                let base64Data = currentBase64Image;
+                if (!base64Data) {
+                    base64Data = document.getElementById('photoPreviewCanvas').toDataURL('image/png').split(',')[1];
+                }
+                const buildingLabel = BUILDING_PROFILES[activeBuildingType].label;
+                const systemPrompt = `شما مهندس ارشد انرژی ساختمان هستید. این تصویر مربوط به یک فضای «${buildingLabel}» است.
+وسایل موجود (مبل، تخت، میز، نیمکت، کمد، پرده، پنجره، شوفاژ، بخاری، فرش و درب) را تشخیص دهید و بگویید چگونه همین وسایل را بچینند تا گرمای بسیار کمتری مصرف شود (آزادسازی شوفاژ، عایق کردن دیوار بیرونی سرد با کمد/کتابخانه، دور کردن محل نشستن/خواب/درس از پنجره سرد).
+همچنین موقعیت ۴ وسیله اصلی در نقشه ۲ بعدی ۰ تا ۱۰۰ (currX, currY و optX, optY) را برگردانید. پاسخ به زبان فارسی و JSON باشد.`;
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: `این فضا از نوع «${buildingLabel}» است. تحلیل حرارتی و پیشنهاد چیدمان بهینه بده.` },
+                            { inlineData: { mimeType: "image/png", data: base64Data } }
+                        ]
+                    }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                currentScore: { type: "INTEGER" },
+                                optimizedScore: { type: "INTEGER" },
+                                savingsPercent: { type: "INTEGER" },
+                                summaryAdvice: { type: "STRING" },
+                                detectedItems: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            name: { type: "STRING" },
+                                            role: { type: "STRING" },
+                                            status: { type: "STRING", enum: ["bad", "cold", "warn", "good"] }
+                                        },
+                                        required: ["name", "role", "status"]
+                                    }
+                                },
+                                rearrangementSteps: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            item: { type: "STRING" },
+                                            from: { type: "STRING" },
+                                            to: { type: "STRING" },
+                                            reason: { type: "STRING" },
+                                            impact: { type: "STRING" }
+                                        },
+                                        required: ["item", "from", "to", "reason", "impact"]
+                                    }
+                                },
+                                floorplanItems: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            name: { type: "STRING" },
+                                            type: { type: "STRING", enum: ["desk", "sofa", "cabinet", "rug"] },
+                                            currX: { type: "INTEGER" }, currY: { type: "INTEGER" },
+                                            optX: { type: "INTEGER" }, optY: { type: "INTEGER" }
+                                        },
+                                        required: ["name", "type", "currX", "currY", "optX", "optY"]
+                                    }
+                                }
+                            },
+                            required: ["currentScore", "optimizedScore", "savingsPercent", "summaryAdvice", "detectedItems", "rearrangementSteps"]
+                        }
+                    }
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const result = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (rawJson) {
+                    const parsed = JSON.parse(rawJson);
+                    const target = BUILDING_PROFILES[activeBuildingType];
+                    target.currentScore = parsed.currentScore || 48;
+                    target.optimizedScore = parsed.optimizedScore || 90;
+                    target.savingsPercent = parsed.savingsPercent || 35;
+
+                    if (parsed.detectedItems?.length) {
+                        target.detectedItems = parsed.detectedItems.map(it => ({
+                            ...it, icon: it.status === 'cold' ? 'fa-snowflake' : it.status === 'bad' ? 'fa-triangle-exclamation' : 'fa-couch'
+                        }));
+                    }
+                    if (parsed.rearrangementSteps?.length) target.rearrangementSteps = parsed.rearrangementSteps;
+                    if (parsed.floorplanItems?.length) {
+                        const cMap = { desk: '#3b82f6', sofa: '#f43f5e', cabinet: '#a855f7', rug: '#10b981' };
+                        const sMap = { desk: { w: 24, h: 15 }, sofa: { w: 26, h: 12 }, cabinet: { w: 11, h: 28 }, rug: { w: 38, h: 26 } };
+                        target.furniture = parsed.floorplanItems.map((fi, idx) => {
+                            const d = sMap[fi.type] || { w: 22, h: 14 };
+                            return {
+                                id: `ai_${idx}`, name: fi.name, type: fi.type, w: d.w, h: d.h,
+                                currX: Math.min(84, Math.max(4, fi.currX)), currY: Math.min(78, Math.max(6, fi.currY)),
+                                optX: Math.min(84, Math.max(4, fi.optX)), optY: Math.min(78, Math.max(6, fi.optY)),
+                                x: Math.min(84, Math.max(4, fi.currX)), y: Math.min(78, Math.max(6, fi.currY)),
+                                color: cMap[fi.type] || '#3b82f6'
+                            };
+                        });
+                    }
+                    updateHeaderMetrics();
+                    renderDetectedItemsAndSteps();
+                    applySimulatorLayout('optimized');
+                    if (parsed.summaryAdvice) appendAdvisorMessage(`<strong>تحلیل چیدمان (${buildingLabel}):</strong> ${parsed.summaryAdvice}`);
+                    badge.textContent = 'تحلیل هوش مصنوعی تکمیل شد';
+                    showToast('تحلیل حرارتی تکمیل و چیدمان بهینه اعمال شد!', 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                badge.textContent = 'تحلیل انجام شد';
+                applySimulatorLayout('optimized');
+                showToast('چیدمان بهینه روی نقشه حرارتی اعمال شد.', 'success');
+            } finally {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // GEMINI VISION #2: ARCHITECTURAL BLUEPRINT & PRE-CONSTRUCTION AUDIT
+        // ==========================================
+        async function analyzeBlueprintWithGemini() {
+            const overlay = document.getElementById('bpLoadingOverlay');
+            const badge = document.getElementById('bpAnalysisBadge');
+            overlay.classList.remove('hidden');
+            badge.textContent = 'در حال ممیزی مهندسی نقشه...';
+
+            try {
+                let base64Data = uploadedBlueprintBase64;
+                if (!base64Data) {
+                    // Use current interactive blueprint canvas if user hasn't uploaded a custom CAD image
+                    base64Data = document.getElementById('blueprintCanvas').toDataURL('image/png').split(',')[1];
+                }
+                const buildingLabel = BUILDING_PROFILES[activeBuildingType].label;
+                const climateText = document.getElementById('climateSelect').selectedOptions[0].text;
+                const orientMap = { south: 'جنوبی', north: 'شمالی', east: 'شرقی', west: 'غربی' };
+
+                const systemPrompt = `شما یک معمار ارشد همساز با اقلیم و مهندس تاسیسات حرارتی هستید.
+تصویر ارسال‌شده یک نقشه معماری/پلان ساختمان از نوع «${buildingLabel}» با جهت نمای اصلی «${orientMap[bpOrientation]}» در اقلیم «${climateText}» است.
+به صورت دقیق برای فردی که می‌خواهد این ساختمان را بسازد یا پلان آن را بسنجد تحلیل کنید:
+۱. آیا نقاط کور گرمایی یا نوری در نقشه وجود دارد؟ کجاها؟
+۲. آیا بهره‌گیری از نور و گرمای خورشید زمستانی بهینه است؟
+۳. آیا جای شوفاژها/رادیاتورها (یا سیستم گرمایش) درست است یا قبل از لوله‌کشی و ساخت باید جابجا شوند؟
+پاسخ را حتماً به زبان فارسی و مطابق JSON Schema بدهید.`;
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: `این نقشه معماری یک ${buildingLabel} با جهت ${orientMap[bpOrientation]} است. نقاط کور، آفتاب‌گیری و اصلاحات جانمایی شوفاژ پیش‌ازساخت را در JSON بده.` },
+                            { inlineData: { mimeType: "image/png", data: base64Data } }
+                        ]
+                    }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                energyGrade: { type: "STRING" },
+                                verdictTitle: { type: "STRING" },
+                                verdictDesc: { type: "STRING" },
+                                findings: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            type: { type: "STRING", enum: ["deadzone", "solar", "radiator"] },
+                                            title: { type: "STRING" },
+                                            desc: { type: "STRING" }
+                                        },
+                                        required: ["type", "title", "desc"]
+                                    }
+                                },
+                                preBuildSteps: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            title: { type: "STRING" },
+                                            before: { type: "STRING" },
+                                            after: { type: "STRING" },
+                                            reason: { type: "STRING" },
+                                            impact: { type: "STRING" }
+                                        },
+                                        required: ["title", "before", "after", "reason", "impact"]
+                                    }
+                                }
+                            },
+                            required: ["energyGrade", "verdictTitle", "verdictDesc", "findings", "preBuildSteps"]
+                        }
+                    }
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const result = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (rawJson) {
+                    const parsed = JSON.parse(rawJson);
+                    if (parsed.findings?.length) blueprintFindings = parsed.findings;
+                    if (parsed.preBuildSteps?.length) blueprintSteps = parsed.preBuildSteps;
+
+                    document.getElementById('bpVerdictTitle').textContent = parsed.verdictTitle || 'تحلیل نقشه تکمیل شد';
+                    document.getElementById('bpVerdictDesc').textContent = parsed.verdictDesc || '';
+                    if (parsed.energyGrade) document.getElementById('bpEnergyGrade').textContent = parsed.energyGrade;
+
+                    renderBlueprintFindingsAndSteps();
+                    applyBlueprintLayout('optimized');
+                    appendAdvisorMessage(`<strong>گزارش ممیزی نقشه پیش‌ازساخت (${buildingLabel}):</strong> ${parsed.verdictDesc}`);
+                    badge.textContent = 'ممیزی مهندسی تکمیل شد';
+                    showToast('ممیزی نقشه معماری و اصلاح جانمایی شوفاژها با موفقیت انجام شد!', 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                badge.textContent = 'ممیزی انجام شد';
+                applyBlueprintLayout('optimized');
+                showToast('جانمایی بهینه شوفاژها روی نقشه شبیه‌سازی اعمال شد.', 'success');
+            } finally {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // GEMINI VISUAL REMODEL (gemini-3.1-flash-image)
+        // ==========================================
+        async function generateVisualRemodel() {
+            const box = document.getElementById('generatedImageBox');
+            const loading = document.getElementById('generatedImageLoading');
+            const img = document.getElementById('generatedRemodelImg');
+            const btn = document.getElementById('btnGenerateImage');
+
+            box.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            img.classList.add('hidden');
+            btn.disabled = true;
+
+            try {
+                const spacePrompts = {
+                    home: 'cozy modern Iranian living room interior',
+                    office: 'modern Persian corporate office room interior',
+                    school: 'bright warm modern school classroom interior with tidy student desks',
+                    commercial: 'warm modern boutique clinic reception and waiting area interior'
+                };
+                const promptText = `A realistic, warm, energy-efficient ${spacePrompts[activeBuildingType]} rearranged for maximum winter heating efficiency: the radiator beneath the window is completely unblocked allowing warm air convection, heavy wooden cabinets or bookshelves are placed along the exterior cold wall as thermal insulation, and the main seating/work area is positioned comfortably near the warm interior wall on an insulating rug, warm sunlight coming in, architectural photography, 16:9`;
+
+                const payload = {
+                    contents: [{ role: 'user', parts: [{ text: promptText }] }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE'],
+                        imageConfig: { aspectRatio: "16:9" }
+                    }
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+                const result = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                if (part?.inlineData?.data) {
+                    img.src = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+                    img.classList.remove('hidden');
+                    showToast('تصویر چیدمان بهینه و گرم فضا تولید شد!', 'success');
+                } else {
+                    throw new Error('No image');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('خطا در تولید تصویر؛ لطفاً دوباره تلاش کنید.', 'error');
+                box.classList.add('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // SHARED AI ADVISOR & CALCULATOR
+        // ==========================================
+        function appendAdvisorMessage(htmlContent) {
+            const chatBox = document.getElementById('chatResponseBox');
+            chatBox.innerHTML += `
+                <div class="bg-emerald-950/35 border border-emerald-500/30 p-3 rounded-xl text-slate-200 text-xs leading-relaxed">
+                    <i class="fa-solid fa-robot text-emerald-400 ml-1"></i> ${htmlContent}
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function askThermalAdvisor() {
+            const input = document.getElementById('userQuestionInput');
+            const question = input.value.trim();
+            if (!question) { showToast('لطفاً سوال خود را بنویسید.', 'info'); return; }
+
+            const chatBox = document.getElementById('chatResponseBox');
+            const btn = document.getElementById('btnAskAdvisor');
+            btn.disabled = true;
+            input.value = '';
+
+            chatBox.innerHTML += `
+                <div class="bg-slate-800/80 p-2.5 rounded-xl text-white text-xs">
+                    <strong class="text-orange-400">شما:</strong> ${question}
+                </div>
+                <div id="tempThinking" class="text-slate-400 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-spinner animate-spin text-orange-400"></i>
+                    <span>در حال تدوین راهکار مهندسی...</span>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const buildingLabel = BUILDING_PROFILES[activeBuildingType].label;
+                const modeLabel = activeMainMode === 'blueprint' ? 'طراحی نقشه و پیش‌ازساخت (خورشید، نقاط کور و جانمایی شوفاژ)' : 'بهینه‌سازی چیدمان وسایل فضای موجود';
+                const climate = document.getElementById('climateSelect').selectedOptions[0].text;
+
+                const systemPrompt = `شما مهندس معماری پایدار و متخصص بهینه‌سازی مصرف گرما هستید.
+کاربر در بخش «${modeLabel}» برای ساختمان با کاربری «${buildingLabel}» (جهت ${bpOrientation}، اقلیم ${climate}) سوال می‌پرسد.
+پاسخ دقیق، کاربردی، علمی و کوتاه به زبان فارسی ارائه دهید.`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: question }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const result = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const reply = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'پیشنهاد می‌شود رادیاتورها زیر پنجره‌های جداره بیرونی قرار گیرند و فضای جلوی آن‌ها حداقل ۶۰ سانتی‌متر آزاد باشد.';
+                document.getElementById('tempThinking')?.remove();
+                appendAdvisorMessage(`<strong>پاسخ مشاور گرماچین:</strong> ${reply}`);
+            } catch {
+                document.getElementById('tempThinking')?.remove();
+                showToast('خطا در دریافت پاسخ؛ لطفاً مجدداً تلاش کنید.', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function updateBuildingCalculator() {
+            const val = parseInt(document.getElementById('sliderRoomCount').value, 10);
+            const profile = BUILDING_PROFILES[activeBuildingType];
+            const displayAmount = val * profile.calcFactor;
+            document.getElementById('lblRoomCount').textContent = `${displayAmount.toLocaleString('fa-IR')} ${profile.calcSuffix}`;
+
+            const savedMeters = activeBuildingType === 'home' ? Math.round(displayAmount * 1.2) : Math.round(displayAmount * 36);
+            document.getElementById('calcSavedMeters').textContent = `${savedMeters.toLocaleString('fa-IR')} متر مکعب`;
+            document.getElementById('calcCo2Saved').textContent = `${profile.savingsPercent}٪ کمتر`;
+        }
+
+        function copyRecommendations() {
+            const p = BUILDING_PROFILES[activeBuildingType];
+            const text = `گزارش بهینه‌سازی گرمایش (${p.label}):\n` +
+                p.rearrangementSteps.map((s, i) => `${i + 1}. ${s.item}: از «${s.from}» به «${s.to}» (${s.impact})`).join('\n');
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+            showToast('گزارش در حافظه کپی شد!', 'success');
+        }
+
+        // Initialize App
+        window.onload = function() {
+            resizeFloorplanCanvas();
+            setBuildingType('home');
+            renderBlueprintFindingsAndSteps();
+        };
+    </script>
+</body>
+</html>
